@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"sync"
 )
 
 var ErrDatabase = errors.New("database error")
-var ErrCollectionNotFound = fmt.Errorf("%w: collection not found", ErrDatabase)
 var ErrEntryNotFound = fmt.Errorf("%w: entry not found", ErrDatabase)
 
 type Entry struct {
@@ -23,32 +23,30 @@ type Model interface {
 }
 
 type Database struct {
-	collections map[string]*sync.Map
+	data *sync.Map
 }
 
 func New() *Database {
 	return &Database{
-		collections: make(map[string]*sync.Map),
+		data: &sync.Map{},
 	}
 }
 
+func (db *Database) getPrefixedKey(collection, key string) string {
+	return fmt.Sprintf("%s/%s", collection, key)
+}
+
 func (db *Database) rawPut(collection, key string, value []byte) error {
-	if db.collections[collection] == nil {
-		db.collections[collection] = &sync.Map{}
-	}
 	entry := &Entry{
 		Key:   key,
 		Value: value,
 	}
-	db.collections[collection].Store(key, entry)
+	db.data.Store(db.getPrefixedKey(collection, key), entry)
 	return nil
 }
 
 func (db *Database) rawGet(collection, key string) (*Entry, error) {
-	if db.collections[collection] == nil {
-		return nil, ErrCollectionNotFound
-	}
-	mEntry, ok := db.collections[collection].Load(key)
+	mEntry, ok := db.data.Load(db.getPrefixedKey(collection, key))
 	if !ok {
 		return nil, ErrEntryNotFound
 	}
@@ -75,23 +73,24 @@ func (db *Database) Get(key string, val Model) error {
 }
 
 func (db *Database) Keys(collection string) ([]string, error) {
-	if db.collections[collection] == nil {
-		return nil, ErrCollectionNotFound
-	}
 	keys := make([]string, 0)
-	db.collections[collection].Range(func(key, value interface{}) bool {
-		keys = append(keys, key.(string))
+	db.data.Range(func(key, value interface{}) bool {
+		prefix, k, _ := strings.Cut(key.(string), "/")
+		if prefix != collection {
+			return true
+		}
+		keys = append(keys, k)
 		return true
 	})
 	return keys, nil
 }
 
 func (db *Database) Entries(collection string) ([]*Entry, error) {
-	if db.collections[collection] == nil {
-		return nil, ErrCollectionNotFound
-	}
 	entries := make([]*Entry, 0)
-	db.collections[collection].Range(func(key, value interface{}) bool {
+	db.data.Range(func(key, value interface{}) bool {
+		if !strings.HasPrefix(key.(string), collection) {
+			return true
+		}
 		entries = append(entries, value.(*Entry))
 		return true
 	})
