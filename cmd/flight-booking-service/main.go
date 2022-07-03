@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/christophwitzko/flight-booking-service/pkg/database"
+	"github.com/christophwitzko/flight-booking-service/pkg/database/seeder"
 	"github.com/christophwitzko/flight-booking-service/pkg/logger"
 	"github.com/christophwitzko/flight-booking-service/pkg/service"
 )
@@ -20,9 +22,13 @@ func main() {
 }
 
 func run(log *logger.Logger) error {
+	db := database.New()
+	if err := seeder.Seed(db); err != nil {
+		return err
+	}
 	srv := &http.Server{
 		Addr:    "127.0.0.1:3000",
-		Handler: service.New(log),
+		Handler: service.New(log, db),
 	}
 	go func() {
 		log.Printf("listening on %s", srv.Addr)

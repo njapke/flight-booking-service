@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -14,6 +15,10 @@ type Logger struct {
 
 func New() *Logger {
 	return &Logger{log.New(os.Stderr, "", log.LstdFlags)}
+}
+
+func NewNullLogger() *Logger {
+	return &Logger{log.New(io.Discard, "", 0)}
 }
 
 func (l *Logger) Error(err error) {
