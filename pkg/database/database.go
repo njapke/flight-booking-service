@@ -26,7 +26,7 @@ func New() *Database {
 	}
 }
 
-func (db *Database) RawPut(collection, key string, value []byte) error {
+func (db *Database) rawPut(collection, key string, value []byte) error {
 	if db.collections[collection] == nil {
 		db.collections[collection] = &sync.Map{}
 	}
@@ -38,7 +38,7 @@ func (db *Database) RawPut(collection, key string, value []byte) error {
 	return nil
 }
 
-func (db *Database) RawGet(collection, key string) (*Entry, error) {
+func (db *Database) rawGet(collection, key string) (*Entry, error) {
 	if db.collections[collection] == nil {
 		return nil, ErrCollectionNotFound
 	}
@@ -49,22 +49,21 @@ func (db *Database) RawGet(collection, key string) (*Entry, error) {
 	return mEntry.(*Entry), nil
 }
 
-func (db *Database) PutUser(key string, u *User) error {
+func (db *Database) Put(u Model) error {
 	userData, err := json.Marshal(u)
 	if err != nil {
 		return err
 	}
-	return db.RawPut("users", key, userData)
+	return db.rawPut("users", u.Key(), userData)
 }
 
-func (db *Database) GetUser(key string) (*User, error) {
-	userData, err := db.RawGet("users", key)
+func (db *Database) Get(key string, val Model) error {
+	userData, err := db.rawGet(val.Collection(), key)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	var user User
-	if err := json.Unmarshal(userData.Value, &user); err != nil {
-		return nil, err
+	if err := json.Unmarshal(userData.Value, val); err != nil {
+		return err
 	}
-	return &user, nil
+	return nil
 }
