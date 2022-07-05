@@ -50,36 +50,42 @@ func (s *Service) writeJSON(w http.ResponseWriter, d any) {
 }
 
 func (s *Service) setupRoutes() {
+	s.router.NotFound(func(w http.ResponseWriter, r *http.Request) {
+		s.sendError(w, "not found", http.StatusNotFound)
+	})
+
 	s.router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, map[string]string{"service": "flight-booking-service"})
 	})
-	s.router.Get("/flights", func(w http.ResponseWriter, r *http.Request) {
-		flights, err := s.db.Values(&models.Flight{})
-		if err != nil {
-			s.sendError(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		s.writeJSON(w, flights)
-	})
-	s.router.Get("/flights/{id}/seats", func(w http.ResponseWriter, r *http.Request) {
-		flightId := chi.URLParam(r, "id")
-		allSeats, err := s.db.Values(&models.Seat{}, flightId)
-		if err != nil {
-			s.sendError(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		seats := make([]*models.Seat, 0)
-		for _, seat := range allSeats {
-			seat := seat.(*models.Seat)
-			if seat.Available {
-				seats = append(seats, seat)
+	s.router.Route("/flights", func(r chi.Router) {
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			flights, err := s.db.Values(&models.Flight{})
+			if err != nil {
+				s.sendError(w, err.Error(), http.StatusInternalServerError)
+				return
 			}
-		}
-		if len(seats) == 0 {
-			s.sendError(w, "no seats available", http.StatusNotFound)
-			return
-		}
-		s.writeJSON(w, seats)
+			s.writeJSON(w, flights)
+		})
+		r.Get("/{id}/seats", func(w http.ResponseWriter, r *http.Request) {
+			flightId := chi.URLParam(r, "id")
+			allSeats, err := s.db.Values(&models.Seat{}, flightId)
+			if err != nil {
+				s.sendError(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			seats := make([]*models.Seat, 0)
+			for _, seat := range allSeats {
+				seat := seat.(*models.Seat)
+				if seat.Available {
+					seats = append(seats, seat)
+				}
+			}
+			if len(seats) == 0 {
+				s.sendError(w, "no seats available", http.StatusNotFound)
+				return
+			}
+			s.writeJSON(w, seats)
+		})
 	})
 }
 
