@@ -87,6 +87,13 @@ func (s *Service) setupRoutes() {
 			s.writeJSON(w, seats)
 		})
 	})
+	s.router.
+		With(middleware.BasicAuth("auth", map[string]string{"user": "pw"})).
+		Route("/bookings", func(r chi.Router) {
+			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				s.writeJSON(w, "ok")
+			})
+		})
 }
 
 func (s *Service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
