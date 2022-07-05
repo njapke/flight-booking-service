@@ -36,7 +36,7 @@ func (s *Service) setupMiddleware() {
 }
 
 func (s *Service) sendError(w http.ResponseWriter, err string, code int) {
-	s.log.Printf("error(code=%d): %s", code, err)
+	s.log.Errorf("error(code=%d): %s", code, err)
 	w.WriteHeader(code)
 	s.writeJSON(w, map[string]string{"error": err})
 }
@@ -45,7 +45,7 @@ func (s *Service) writeJSON(w http.ResponseWriter, d any) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	err := json.NewEncoder(w).Encode(d)
 	if err != nil {
-		s.log.Error(err)
+		s.log.Errorf("json write error: %v", err)
 	}
 }
 
@@ -62,6 +62,7 @@ func (s *Service) setupRoutes() {
 		s.writeJSON(w, flights)
 	})
 	s.router.Get("/flights/{id}/seats", func(w http.ResponseWriter, r *http.Request) {
+
 		flightId := chi.URLParam(r, "id")
 		allSeats, err := s.db.Values(&models.Seat{})
 		if err != nil {

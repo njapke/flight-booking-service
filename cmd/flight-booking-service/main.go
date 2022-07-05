@@ -31,9 +31,9 @@ func run(log *logger.Logger) error {
 		Handler: service.New(log, db),
 	}
 	go func() {
-		log.Printf("listening on %s", srv.Addr)
+		log.Infof("listening on %s", srv.Addr)
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-			log.Error(err)
+			log.Errorf("listen error: %v", err)
 		}
 	}()
 
@@ -41,18 +41,18 @@ func run(log *logger.Logger) error {
 	<-ctx.Done()
 	stop()
 
-	log.Println("stopping server...")
+	log.Info("stopping server...")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err == context.DeadlineExceeded {
-		log.Println("closing server...")
+		log.Info("closing server...")
 		if err := srv.Close(); err != nil {
 			return err
 		}
 	} else if err != nil {
 		return err
 	}
-	log.Println("server stopped!")
+	log.Info("server stopped!")
 	return nil
 }

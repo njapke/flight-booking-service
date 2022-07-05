@@ -9,7 +9,7 @@ func (s *Service) recoverMiddleware(next http.Handler) http.Handler {
 				if err, ok := r.(error); ok {
 					s.sendError(w, err.Error(), http.StatusInternalServerError)
 				} else {
-					s.log.Printf("panic: %v", r)
+					s.log.Errorf("panic: %v", r)
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 			}
