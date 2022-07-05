@@ -30,3 +30,8 @@ func (l *Logger) Middleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+// badger's log interface requires a Warningf method
+func (l *Logger) Warningf(template string, args ...any) {
+	l.Warnf(template, args)
+}

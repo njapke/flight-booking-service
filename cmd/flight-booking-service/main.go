@@ -22,7 +22,10 @@ func main() {
 }
 
 func run(log *logger.Logger) error {
-	db := database.New()
+	db, err := database.New()
+	if err != nil {
+		return err
+	}
 	if err := seeder.Seed(db); err != nil {
 		return err
 	}
@@ -33,7 +36,7 @@ func run(log *logger.Logger) error {
 	go func() {
 		log.Infof("listening on %s", srv.Addr)
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-			log.Errorf("listen error: %v", err)
+			log.Error(err)
 		}
 	}()
 
@@ -48,11 +51,17 @@ func run(log *logger.Logger) error {
 	if err := srv.Shutdown(ctx); err == context.DeadlineExceeded {
 		log.Info("closing server...")
 		if err := srv.Close(); err != nil {
-			return err
+			log.Error(err)
 		}
+		// finishing pending database writes
+		<-time.After(time.Second)
 	} else if err != nil {
+		log.Error(err)
+	}
+
+	log.Info("closing database...")
+	if err := db.Close(); err != nil {
 		return err
 	}
-	log.Info("server stopped!")
 	return nil
 }

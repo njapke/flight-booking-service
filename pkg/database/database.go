@@ -2,15 +2,11 @@ package database
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"reflect"
-	"strings"
-	"sync"
-)
 
-var ErrDatabase = errors.New("database error")
-var ErrEntryNotFound = fmt.Errorf("%w: entry not found", ErrDatabase)
+	"github.com/dgraph-io/badger/v3"
+)
 
 type Entry struct {
 	Key   string
@@ -23,34 +19,50 @@ type Model interface {
 }
 
 type Database struct {
-	data *sync.Map
+	db *badger.DB
 }
 
-func New() *Database {
-	return &Database{
-		data: &sync.Map{},
+func New() (*Database, error) {
+	opts := badger.DefaultOptions("").
+		WithInMemory(true).
+		WithLoggingLevel(badger.WARNING)
+	db, err := badger.Open(opts)
+	if err != nil {
+		return nil, err
 	}
+
+	return &Database{
+		db: db,
+	}, nil
 }
 
-func (db *Database) getPrefixedKey(collection, key string) string {
-	return fmt.Sprintf("%s/%s", collection, key)
+func (db *Database) getPrefixedKey(collection, key string) []byte {
+	return []byte(fmt.Sprintf("%s/%s", collection, key))
 }
 
 func (db *Database) rawPut(collection, key string, value []byte) error {
-	entry := &Entry{
-		Key:   key,
-		Value: value,
-	}
-	db.data.Store(db.getPrefixedKey(collection, key), entry)
-	return nil
+	return db.db.Update(func(txn *badger.Txn) error {
+		return txn.Set(db.getPrefixedKey(collection, key), value)
+	})
 }
 
-func (db *Database) rawGet(collection, key string) (*Entry, error) {
-	mEntry, ok := db.data.Load(db.getPrefixedKey(collection, key))
-	if !ok {
-		return nil, ErrEntryNotFound
+func (db *Database) rawGet(collection, key string) ([]byte, error) {
+	var val []byte
+	err := db.db.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(db.getPrefixedKey(collection, key))
+		if err != nil {
+			return err
+		}
+		val, err = item.ValueCopy(nil)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
-	return mEntry.(*Entry), nil
+	return val, nil
 }
 
 func (db *Database) Put(m Model) error {
@@ -62,53 +74,44 @@ func (db *Database) Put(m Model) error {
 }
 
 func (db *Database) Get(key string, val Model) error {
-	entry, err := db.rawGet(val.Collection(), key)
+	value, err := db.rawGet(val.Collection(), key)
 	if err != nil {
 		return err
 	}
-	if err := json.Unmarshal(entry.Value, val); err != nil {
+	if err := json.Unmarshal(value, val); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (db *Database) Keys(collection string) ([]string, error) {
-	keys := make([]string, 0)
-	db.data.Range(func(key, value interface{}) bool {
-		prefix, k, _ := strings.Cut(key.(string), "/")
-		if prefix != collection {
-			return true
-		}
-		keys = append(keys, k)
-		return true
-	})
-	return keys, nil
-}
-
-func (db *Database) Entries(collection string) ([]*Entry, error) {
-	entries := make([]*Entry, 0)
-	db.data.Range(func(key, value interface{}) bool {
-		if !strings.HasPrefix(key.(string), collection) {
-			return true
-		}
-		entries = append(entries, value.(*Entry))
-		return true
-	})
-	return entries, nil
-}
-
 func (db *Database) Values(forModel Model) ([]Model, error) {
-	entries, err := db.Entries(forModel.Collection())
+	values := make([]Model, 0)
+	err := db.db.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+		prefix := db.getPrefixedKey(forModel.Collection(), "")
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			item := it.Item()
+			err := item.Value(func(val []byte) error {
+				modelVal := reflect.New(reflect.TypeOf(forModel).Elem()).Interface().(Model)
+				if err := json.Unmarshal(val, modelVal); err != nil {
+					return err
+				}
+				values = append(values, modelVal)
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	values := make([]Model, len(entries))
-	for i, entry := range entries {
-		val := reflect.New(reflect.TypeOf(forModel).Elem()).Interface().(Model)
-		if err := json.Unmarshal(entry.Value, val); err != nil {
-			return nil, err
-		}
-		values[i] = val
-	}
 	return values, nil
+}
+
+func (db *Database) Close() error {
+	return db.db.Close()
 }
