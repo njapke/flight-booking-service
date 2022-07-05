@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/dgraph-io/badger/v3"
 )
@@ -84,12 +85,12 @@ func (db *Database) Get(key string, val Model) error {
 	return nil
 }
 
-func (db *Database) Values(forModel Model) ([]Model, error) {
+func (db *Database) Values(forModel Model, prefixes ...string) ([]Model, error) {
 	values := make([]Model, 0)
 	err := db.db.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
-		prefix := db.getPrefixedKey(forModel.Collection(), "")
+		prefix := db.getPrefixedKey(forModel.Collection(), strings.Join(prefixes, "/"))
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			item := it.Item()
 			err := item.Value(func(val []byte) error {

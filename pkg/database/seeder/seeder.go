@@ -19,7 +19,6 @@ func generateSeats(flightId string) []*models.Seat {
 		}
 		for _, seat := range []string{"A", "B", "C", "D", "E", "F"} {
 			seats[i] = &models.Seat{
-				ID:        fmt.Sprintf("%s/%d", flightId, i),
 				FlightID:  flightId,
 				Seat:      fmt.Sprintf("%d%s", row, seat),
 				Row:       row,

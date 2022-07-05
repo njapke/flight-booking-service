@@ -1,7 +1,8 @@
 package models
 
+import "fmt"
+
 type Seat struct {
-	ID        string `json:"id"`
 	FlightID  string `json:"flightId"`
 	Seat      string `json:"seat"`
 	Row       int    `json:"row"`
@@ -9,10 +10,10 @@ type Seat struct {
 	Available bool   `json:"available"`
 }
 
-func (u *Seat) Collection() string {
+func (s *Seat) Collection() string {
 	return "seats"
 }
 
-func (u *Seat) Key() string {
-	return u.ID
+func (s *Seat) Key() string {
+	return fmt.Sprintf("%s/%s", s.FlightID, s.Seat)
 }

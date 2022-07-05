@@ -11,10 +11,10 @@ type Flight struct {
 	Status    string    `json:"status"`
 }
 
-func (u *Flight) Collection() string {
+func (f *Flight) Collection() string {
 	return "flights"
 }
 
-func (u *Flight) Key() string {
-	return u.ID
+func (f *Flight) Key() string {
+	return f.ID
 }

@@ -14,6 +14,7 @@ type Logger struct {
 func New() *Logger {
 	cfg := zap.NewDevelopmentConfig()
 	cfg.DisableCaller = true
+	cfg.DisableStacktrace = true
 	logger, _ := cfg.Build()
 	return &Logger{logger.Sugar()}
 }

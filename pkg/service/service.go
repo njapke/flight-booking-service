@@ -36,7 +36,7 @@ func (s *Service) setupMiddleware() {
 }
 
 func (s *Service) sendError(w http.ResponseWriter, err string, code int) {
-	s.log.Errorf("error(code=%d): %s", code, err)
+	s.log.Warnf("error(code=%d): %s", code, err)
 	w.WriteHeader(code)
 	s.writeJSON(w, map[string]string{"error": err})
 }
@@ -62,9 +62,8 @@ func (s *Service) setupRoutes() {
 		s.writeJSON(w, flights)
 	})
 	s.router.Get("/flights/{id}/seats", func(w http.ResponseWriter, r *http.Request) {
-
 		flightId := chi.URLParam(r, "id")
-		allSeats, err := s.db.Values(&models.Seat{})
+		allSeats, err := s.db.Values(&models.Seat{}, flightId)
 		if err != nil {
 			s.sendError(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -72,9 +71,13 @@ func (s *Service) setupRoutes() {
 		seats := make([]*models.Seat, 0)
 		for _, seat := range allSeats {
 			seat := seat.(*models.Seat)
-			if seat.Available && seat.FlightID == flightId {
+			if seat.Available {
 				seats = append(seats, seat)
 			}
+		}
+		if len(seats) == 0 {
+			s.sendError(w, "no seats available", http.StatusNotFound)
+			return
 		}
 		s.writeJSON(w, seats)
 	})
