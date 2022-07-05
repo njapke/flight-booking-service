@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/christophwitzko/flight-booking-service/pkg/database/models"
-
 	"github.com/christophwitzko/flight-booking-service/pkg/database"
+	"github.com/christophwitzko/flight-booking-service/pkg/database/models"
 	"github.com/christophwitzko/flight-booking-service/pkg/logger"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -61,6 +60,22 @@ func (s *Service) setupRoutes() {
 			return
 		}
 		s.writeJSON(w, flights)
+	})
+	s.router.Get("/flights/{id}/seats", func(w http.ResponseWriter, r *http.Request) {
+		flightId := chi.URLParam(r, "id")
+		allSeats, err := s.db.Values(&models.Seat{})
+		if err != nil {
+			s.sendError(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		seats := make([]*models.Seat, 0)
+		for _, seat := range allSeats {
+			seat := seat.(*models.Seat)
+			if seat.Available && seat.FlightID == flightId {
+				seats = append(seats, seat)
+			}
+		}
+		s.writeJSON(w, seats)
 	})
 }
 
