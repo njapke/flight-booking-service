@@ -1,5 +1,7 @@
 package models
 
+import "fmt"
+
 type Passenger struct {
 	Name string `json:"name"`
 	Seat string `json:"seat"`
@@ -19,5 +21,5 @@ func (b *Booking) Collection() string {
 }
 
 func (b *Booking) Key() string {
-	return b.ID
+	return fmt.Sprintf("%s/%s", b.UserID, b.ID)
 }

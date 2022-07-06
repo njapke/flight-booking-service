@@ -19,6 +19,7 @@ type Service struct {
 	router *chi.Mux
 	log    *logger.Logger
 	db     *database.Database
+	Auth   map[string]string
 }
 
 func New(logger *logger.Logger, db *database.Database) *Service {
@@ -26,6 +27,7 @@ func New(logger *logger.Logger, db *database.Database) *Service {
 		router: chi.NewRouter(),
 		log:    logger,
 		db:     db,
+		Auth:   map[string]string{"user": "pw"},
 	}
 	svc.setupMiddleware()
 	svc.setupRoutes()
@@ -114,12 +116,16 @@ func (s *Service) setupRoutes() {
 	})
 
 	s.router.
-		With(middleware.BasicAuth("auth", map[string]string{"user": "pw"})).
+		With(middleware.BasicAuth("auth", s.Auth)).
 		Route("/bookings", func(r chi.Router) {
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				// TODO: list users bookings
 				user, _, _ := r.BasicAuth()
-				s.writeJSON(w, user)
+				bookings, err := s.db.Values(&models.Booking{}, user)
+				if err != nil {
+					s.sendError(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				s.writeJSON(w, bookings)
 			})
 			r.Post("/", func(w http.ResponseWriter, r *http.Request) {
 				userId, _, _ := r.BasicAuth()
