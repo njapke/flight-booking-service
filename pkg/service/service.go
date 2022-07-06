@@ -43,8 +43,12 @@ func (s *Service) sendError(w http.ResponseWriter, err string, code int) {
 	s.writeJSON(w, map[string]string{"error": err})
 }
 
-func (s *Service) writeJSON(w http.ResponseWriter, d any) {
+func (s *Service) contentTypeJson(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+}
+
+func (s *Service) writeJSON(w http.ResponseWriter, d any) {
+	s.contentTypeJson(w)
 	err := json.NewEncoder(w).Encode(d)
 	if err != nil {
 		s.log.Errorf("json write error: %v", err)
@@ -70,10 +74,12 @@ func (s *Service) setupRoutes() {
 		})
 		r.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 			flightId := chi.URLParam(r, "id")
-			var flight models.Flight
-			err := s.db.Get(flightId, &flight)
+			flightData, err := s.db.RawGet("flights", flightId)
 			if err == nil {
-				s.writeJSON(w, flight)
+				s.contentTypeJson(w)
+				if _, err := w.Write(flightData); err != nil {
+					s.log.Errorf("write error: %v", err)
+				}
 			} else if errors.Is(err, badger.ErrKeyNotFound) {
 				s.sendError(w, "flight not found", http.StatusNotFound)
 			} else {

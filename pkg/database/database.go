@@ -67,6 +67,25 @@ func (db *Database) Get(key string, val Model) error {
 	return nil
 }
 
+func (db *Database) RawGet(collection, key string) ([]byte, error) {
+	var val []byte
+	err := db.db.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(db.getPrefixedKey(collection, key))
+		if err != nil {
+			return err
+		}
+		val, err = item.ValueCopy(nil)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return val, nil
+}
+
 func (db *Database) Values(forModel Model, prefixes ...string) ([]Model, error) {
 	values := make([]Model, 0)
 	err := db.db.View(func(txn *badger.Txn) error {

@@ -1,12 +1,36 @@
 package database
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
 	"github.com/christophwitzko/flight-booking-service/pkg/database/models"
 	"github.com/stretchr/testify/require"
 )
+
+func TestRawGet(t *testing.T) {
+	db, err := New()
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, db.Close())
+	}()
+
+	u := &models.Flight{
+		ID:     "123",
+		From:   "AAA",
+		To:     "BBB",
+		Status: "test",
+	}
+	err = db.Put(u)
+	require.NoError(t, err)
+
+	var res models.Flight
+	resData, err := db.RawGet(res.Collection(), "123")
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(resData, &res))
+	require.Equal(t, u, &res)
+}
 
 func TestPutGet(t *testing.T) {
 	db, err := New()
@@ -81,4 +105,37 @@ func TestValuesWithPrefixes(t *testing.T) {
 	require.NoError(t, err)
 
 	require.ElementsMatch(t, expectedValues, values)
+}
+
+func BenchmarkPut(b *testing.B) {
+	db, _ := New()
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = db.Put(&models.Flight{ID: "123"})
+	}
+}
+
+func BenchmarkGet(b *testing.B) {
+	db, _ := New()
+	_ = db.Put(&models.Flight{ID: "123"})
+
+	var flight models.Flight
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = db.Get("123", &flight)
+	}
+}
+
+func BenchmarkRawGet(b *testing.B) {
+	db, _ := New()
+	_ = db.Put(&models.Flight{ID: "123"})
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = db.RawGet("flights", "123")
+	}
 }
