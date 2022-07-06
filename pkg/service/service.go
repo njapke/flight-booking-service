@@ -168,7 +168,7 @@ func (s *Service) setupRoutes() {
 				}
 				updates[len(updates)-1] = booking
 
-				if err := s.db.Put(booking); err != nil {
+				if err := s.db.Put(updates...); err != nil {
 					s.sendError(w, err.Error(), http.StatusInternalServerError)
 				}
 
