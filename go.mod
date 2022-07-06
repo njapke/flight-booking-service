@@ -6,6 +6,7 @@ require (
 	github.com/brianvoe/gofakeit/v6 v6.17.0
 	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/go-chi/chi/v5 v5.0.7
+	github.com/google/uuid v1.3.0
 	github.com/stretchr/testify v1.8.0
 	go.uber.org/zap v1.21.0
 )

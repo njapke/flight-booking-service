@@ -15,8 +15,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func sendRequest(s http.Handler, method, path string, body io.Reader) *httptest.ResponseRecorder {
+func sendRequest(s http.Handler, method, path string, body io.Reader, auth ...string) *httptest.ResponseRecorder {
 	req, _ := http.NewRequest(method, path, body)
+	if len(auth) > 1 {
+		req.SetBasicAuth(auth[0], auth[1])
+	}
 	rr := httptest.NewRecorder()
 	s.ServeHTTP(rr, req)
 	return rr
@@ -82,4 +85,46 @@ func BenchmarkFlights(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		s.ServeHTTP(responseRecorder, request)
 	}
+}
+
+func TestCreateBooking(t *testing.T) {
+	s := initService(t)
+	defer func() {
+		require.NoError(t, s.db.Close())
+	}()
+	flight := &models.Flight{ID: "123", From: "AAA", To: "BBB", Status: "test"}
+	require.NoError(t, s.db.Put(flight))
+	seats := []database.Model{
+		&models.Seat{FlightID: flight.ID, Seat: "A1", Row: 1, Price: 10, Available: false},
+		&models.Seat{FlightID: flight.ID, Seat: "B1", Row: 1, Price: 10, Available: true},
+		&models.Seat{FlightID: flight.ID, Seat: "C1", Row: 1, Price: 10, Available: true},
+		&models.Seat{FlightID: flight.ID, Seat: "F3", Row: 3, Price: 10, Available: false},
+	}
+	require.NoError(t, s.db.Put(seats...))
+
+	// check if seats are correctly stored in database
+	res := sendRequest(s, "GET", "/flights/123/seats", nil)
+	require.Equal(t, http.StatusOK, res.Code)
+	var resSeats []*models.Seat
+	require.NoError(t, json.Unmarshal(res.Body.Bytes(), &resSeats))
+	require.Len(t, resSeats, 2)
+
+	bookingRequest := &models.Booking{
+		FlightID: flight.ID,
+		Passengers: []models.Passenger{
+			{Name: "John", Seat: "B1"},
+			{Name: "Jane", Seat: "C1"},
+		},
+	}
+	buf := &bytes.Buffer{}
+	require.NoError(t, json.NewEncoder(buf).Encode(bookingRequest))
+	res = sendRequest(s, "POST", "/bookings", buf, "user", "pw")
+	require.Equal(t, http.StatusOK, res.Code)
+
+	var bookingResponse models.Booking
+	require.NoError(t, json.Unmarshal(res.Body.Bytes(), &bookingResponse))
+	require.Equal(t, bookingRequest.FlightID, bookingResponse.FlightID)
+	require.Equal(t, bookingResponse.Passengers, bookingResponse.Passengers)
+	require.Equal(t, 20, bookingResponse.Price)
+	require.Equal(t, "confirmed", bookingResponse.Status)
 }

@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/christophwitzko/flight-booking-service/pkg/database"
@@ -11,6 +12,7 @@ import (
 	"github.com/dgraph-io/badger/v3"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/google/uuid"
 )
 
 type Service struct {
@@ -65,6 +67,7 @@ func (s *Service) setupRoutes() {
 	s.router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		s.writeJSON(w, map[string]string{"service": "flight-booking-service"})
 	})
+
 	s.router.Route("/flights", func(r chi.Router) {
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			flights, err := s.db.Values(&models.Flight{})
@@ -109,11 +112,67 @@ func (s *Service) setupRoutes() {
 			s.writeJSON(w, seats)
 		})
 	})
+
 	s.router.
 		With(middleware.BasicAuth("auth", map[string]string{"user": "pw"})).
 		Route("/bookings", func(r chi.Router) {
 			r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				s.writeJSON(w, "ok")
+				// TODO: list users bookings
+				user, _, _ := r.BasicAuth()
+				s.writeJSON(w, user)
+			})
+			r.Post("/", func(w http.ResponseWriter, r *http.Request) {
+				userId, _, _ := r.BasicAuth()
+				var bookingRequest models.Booking
+				if err := json.NewDecoder(r.Body).Decode(&bookingRequest); err != nil {
+					s.sendError(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+				if len(bookingRequest.Passengers) == 0 {
+					s.sendError(w, "no passengers", http.StatusBadRequest)
+					return
+				}
+				var flight models.Flight
+				if err := s.db.Get(bookingRequest.FlightID, &flight); err != nil {
+					s.log.Warnf("could not get flight: %v", err)
+					s.sendError(w, "could not find flight", http.StatusNotFound)
+					return
+				}
+
+				price := 0
+				updates := make([]database.Model, len(bookingRequest.Passengers)+1)
+				for i, passenger := range bookingRequest.Passengers {
+					var seat models.Seat
+					key := fmt.Sprintf("%s/%s", flight.ID, passenger.Seat)
+					if err := s.db.Get(key, &seat); err != nil {
+						s.log.Warnf("could not find flight: %v", err)
+						s.sendError(w, "could not find seat", http.StatusNotFound)
+						return
+					}
+					if !seat.Available {
+						s.sendError(w, "seat not available", http.StatusNotFound)
+						return
+					}
+					price += seat.Price
+					seat.Available = false
+					updates[i] = &seat
+				}
+
+				booking := &models.Booking{
+					ID:         uuid.NewString(),
+					UserID:     userId,
+					FlightID:   flight.ID,
+					Price:      price,
+					Status:     "confirmed",
+					Passengers: bookingRequest.Passengers,
+				}
+				updates[len(updates)-1] = booking
+
+				if err := s.db.Put(booking); err != nil {
+					s.sendError(w, err.Error(), http.StatusInternalServerError)
+				}
+
+				s.writeJSON(w, booking)
 			})
 		})
 }
