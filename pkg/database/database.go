@@ -41,13 +41,26 @@ func (db *Database) getPrefixedKey(collection, key string) []byte {
 	return []byte(fmt.Sprintf("%s/%s", collection, key))
 }
 
-func (db *Database) Put(m Model) error {
+func (db *Database) toEntry(m Model) (*badger.Entry, error) {
 	entryValue, err := json.Marshal(m)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	return badger.NewEntry(db.getPrefixedKey(m.Collection(), m.Key()), entryValue), nil
+}
+
+func (db *Database) Put(models ...Model) error {
 	return db.db.Update(func(txn *badger.Txn) error {
-		return txn.Set(db.getPrefixedKey(m.Collection(), m.Key()), entryValue)
+		for _, m := range models {
+			e, err := db.toEntry(m)
+			if err != nil {
+				return err
+			}
+			if err := txn.SetEntry(e); err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 }
 
