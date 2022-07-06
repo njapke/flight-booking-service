@@ -33,6 +33,8 @@ func New(logger *logger.Logger, db *database.Database) *Service {
 func (s *Service) setupMiddleware() {
 	s.router.Use(middleware.CleanPath)
 	s.router.Use(middleware.RequestID)
+	s.router.Use(middleware.RealIP)
+	s.router.Use(middleware.Compress(5))
 	s.router.Use(s.log.Middleware)
 	s.router.Use(s.recoverMiddleware)
 }

@@ -71,7 +71,7 @@ func TestGetFlight(t *testing.T) {
 
 func BenchmarkFlights(b *testing.B) {
 	db, _ := database.New()
-	seeder.Seed(db)
+	_ = seeder.Seed(db)
 	s := New(logger.NewNop(), db)
 
 	responseRecorder := httptest.NewRecorder()
