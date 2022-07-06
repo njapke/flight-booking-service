@@ -2,11 +2,13 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/christophwitzko/flight-booking-service/pkg/database"
 	"github.com/christophwitzko/flight-booking-service/pkg/database/models"
 	"github.com/christophwitzko/flight-booking-service/pkg/logger"
+	"github.com/dgraph-io/badger/v3"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -65,6 +67,18 @@ func (s *Service) setupRoutes() {
 				return
 			}
 			s.writeJSON(w, flights)
+		})
+		r.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
+			flightId := chi.URLParam(r, "id")
+			var flight models.Flight
+			err := s.db.Get(flightId, &flight)
+			if err == nil {
+				s.writeJSON(w, flight)
+			} else if errors.Is(err, badger.ErrKeyNotFound) {
+				s.sendError(w, "flight not found", http.StatusNotFound)
+			} else {
+				s.sendError(w, err.Error(), http.StatusInternalServerError)
+			}
 		})
 		r.Get("/{id}/seats", func(w http.ResponseWriter, r *http.Request) {
 			flightId := chi.URLParam(r, "id")

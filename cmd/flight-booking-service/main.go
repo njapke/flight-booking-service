@@ -22,6 +22,8 @@ func main() {
 }
 
 func run(log *logger.Logger) error {
+	defer log.Sync()
+
 	db, err := database.New()
 	if err != nil {
 		return err
