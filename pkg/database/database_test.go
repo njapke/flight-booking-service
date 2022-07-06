@@ -8,22 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRawPutGet(t *testing.T) {
-	db, err := New()
-	require.NoError(t, err)
-	defer func() {
-		require.NoError(t, db.Close())
-	}()
-
-	val := []byte("test")
-	err = db.rawPut("test", "key", val)
-	require.NoError(t, err)
-
-	res, err := db.rawGet("test", "key")
-	require.NoError(t, err)
-	require.Equal(t, val, res)
-}
-
 func TestPutGet(t *testing.T) {
 	db, err := New()
 	require.NoError(t, err)

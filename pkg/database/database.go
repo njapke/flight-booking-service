@@ -41,45 +41,27 @@ func (db *Database) getPrefixedKey(collection, key string) []byte {
 	return []byte(fmt.Sprintf("%s/%s", collection, key))
 }
 
-func (db *Database) rawPut(collection, key string, value []byte) error {
-	return db.db.Update(func(txn *badger.Txn) error {
-		return txn.Set(db.getPrefixedKey(collection, key), value)
-	})
-}
-
-func (db *Database) rawGet(collection, key string) ([]byte, error) {
-	var val []byte
-	err := db.db.View(func(txn *badger.Txn) error {
-		item, err := txn.Get(db.getPrefixedKey(collection, key))
-		if err != nil {
-			return err
-		}
-		val, err = item.ValueCopy(nil)
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return val, nil
-}
-
 func (db *Database) Put(m Model) error {
 	entryValue, err := json.Marshal(m)
 	if err != nil {
 		return err
 	}
-	return db.rawPut(m.Collection(), m.Key(), entryValue)
+	return db.db.Update(func(txn *badger.Txn) error {
+		return txn.Set(db.getPrefixedKey(m.Collection(), m.Key()), entryValue)
+	})
 }
 
 func (db *Database) Get(key string, val Model) error {
-	value, err := db.rawGet(val.Collection(), key)
+	err := db.db.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(db.getPrefixedKey(val.Collection(), key))
+		if err != nil {
+			return err
+		}
+		return item.Value(func(value []byte) error {
+			return json.Unmarshal(value, val)
+		})
+	})
 	if err != nil {
-		return err
-	}
-	if err := json.Unmarshal(value, val); err != nil {
 		return err
 	}
 	return nil
