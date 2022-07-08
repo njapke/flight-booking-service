@@ -1,6 +1,7 @@
 package database
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -138,4 +139,22 @@ func BenchmarkRawGet(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, _ = db.RawGet("flights", "123")
 	}
+}
+
+func TestValuesRawValues(t *testing.T) {
+	db, err := New()
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, db.Close())
+	}()
+
+	originalFlights := []Model{&models.Flight{ID: "A"}, &models.Flight{ID: "B"}, &models.Flight{ID: "C"}}
+	require.NoError(t, db.Put(originalFlights...))
+
+	buf := &bytes.Buffer{}
+	require.NoError(t, db.RawValues(buf, "flights"))
+
+	var flights []*models.Flight
+	require.NoError(t, json.NewDecoder(buf).Decode(&flights))
+	require.ElementsMatch(t, originalFlights, flights)
 }

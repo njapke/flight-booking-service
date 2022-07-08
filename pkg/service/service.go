@@ -72,12 +72,11 @@ func (s *Service) setupRoutes() {
 
 	s.router.Route("/flights", func(r chi.Router) {
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			flights, err := s.db.Values(&models.Flight{})
+			s.contentTypeJson(w)
+			err := s.db.RawValues(w, "flights")
 			if err != nil {
-				s.sendError(w, err.Error(), http.StatusInternalServerError)
-				return
+				s.log.Errorf("error getting flights: %v", err)
 			}
-			s.writeJSON(w, flights)
 		})
 		r.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 			flightId := chi.URLParam(r, "id")

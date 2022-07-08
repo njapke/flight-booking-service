@@ -3,6 +3,7 @@ package database
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"reflect"
 	"strings"
 
@@ -125,6 +126,37 @@ func (db *Database) Values(forModel Model, prefixes ...string) ([]Model, error) 
 		return nil, err
 	}
 	return values, nil
+}
+
+func (db *Database) RawValues(w io.Writer, prefixes ...string) error {
+	return db.db.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+		_, err := w.Write([]byte("["))
+		if err != nil {
+			return err
+		}
+		prefix := []byte(strings.Join(prefixes, "/"))
+		for it.Seek(prefix); it.ValidForPrefix(prefix); {
+			item := it.Item()
+			err := item.Value(func(val []byte) error {
+				_, err := w.Write(val)
+				return err
+			})
+			if err != nil {
+				return err
+			}
+			it.Next()
+			if it.ValidForPrefix(prefix) {
+				_, err := w.Write([]byte(","))
+				if err != nil {
+					return err
+				}
+			}
+		}
+		_, err = w.Write([]byte("]"))
+		return err
+	})
 }
 
 func (db *Database) Close() error {
