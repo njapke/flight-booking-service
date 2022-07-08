@@ -127,4 +127,48 @@ func TestCreateBooking(t *testing.T) {
 	require.Equal(t, bookingResponse.Passengers, bookingResponse.Passengers)
 	require.Equal(t, 20, bookingResponse.Price)
 	require.Equal(t, "confirmed", bookingResponse.Status)
+
+	var bookings []*models.Booking
+	res = sendRequest(s, "GET", "/bookings", nil, "user", "pw")
+	require.Equal(t, http.StatusOK, res.Code)
+	require.NoError(t, json.Unmarshal(res.Body.Bytes(), &bookings))
+	require.Len(t, bookings, 1)
+	require.Equal(t, bookingResponse, *bookings[0])
+}
+
+func TestNotFound(t *testing.T) {
+	s := initService(t)
+	defer func() {
+		require.NoError(t, s.db.Close())
+	}()
+	res := sendRequest(s, "GET", "/not-found", nil)
+	require.Equal(t, http.StatusNotFound, res.Code)
+}
+
+func TestCreateInvalidBooking(t *testing.T) {
+	s := initService(t)
+	defer func() {
+		require.NoError(t, s.db.Close())
+	}()
+	flight := &models.Flight{ID: "123", From: "AAA", To: "BBB", Status: "test"}
+	require.NoError(t, s.db.Put(flight))
+	seats := []database.Model{
+		&models.Seat{FlightID: flight.ID, Seat: "A1", Row: 1, Price: 10, Available: false},
+		&models.Seat{FlightID: flight.ID, Seat: "B1", Row: 1, Price: 10, Available: true},
+		&models.Seat{FlightID: flight.ID, Seat: "C1", Row: 1, Price: 10, Available: true},
+		&models.Seat{FlightID: flight.ID, Seat: "F3", Row: 3, Price: 10, Available: false},
+	}
+	require.NoError(t, s.db.Put(seats...))
+
+	bookingRequest := &models.Booking{
+		FlightID: flight.ID,
+		Passengers: []models.Passenger{
+			{Name: "John", Seat: "A1"},
+			{Name: "Jane", Seat: "B1"},
+		},
+	}
+	buf := &bytes.Buffer{}
+	require.NoError(t, json.NewEncoder(buf).Encode(bookingRequest))
+	res := sendRequest(s, "POST", "/bookings", buf, "user", "pw")
+	require.Equal(t, http.StatusBadRequest, res.Code)
 }

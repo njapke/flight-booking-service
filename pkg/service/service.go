@@ -140,7 +140,7 @@ func (s *Service) setupRoutes() {
 				var flight models.Flight
 				if err := s.db.Get(bookingRequest.FlightID, &flight); err != nil {
 					s.log.Warnf("could not get flight: %v", err)
-					s.sendError(w, "could not find flight", http.StatusNotFound)
+					s.sendError(w, "could not find flight", http.StatusBadRequest)
 					return
 				}
 
@@ -151,11 +151,11 @@ func (s *Service) setupRoutes() {
 					key := fmt.Sprintf("%s/%s", flight.ID, passenger.Seat)
 					if err := s.db.Get(key, &seat); err != nil {
 						s.log.Warnf("could not find flight: %v", err)
-						s.sendError(w, "could not find seat", http.StatusNotFound)
+						s.sendError(w, "could not find seat", http.StatusBadRequest)
 						return
 					}
 					if !seat.Available {
-						s.sendError(w, "seat not available", http.StatusNotFound)
+						s.sendError(w, "seat not available", http.StatusBadRequest)
 						return
 					}
 					price += seat.Price
