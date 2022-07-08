@@ -27,7 +27,7 @@ func New(logger *logger.Logger, db *database.Database) *Service {
 		router: chi.NewRouter(),
 		log:    logger,
 		db:     db,
-		Auth:   map[string]string{"user": "pw"},
+		Auth:   make(map[string]string),
 	}
 	svc.setupMiddleware()
 	svc.setupRoutes()

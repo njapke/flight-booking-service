@@ -31,9 +31,13 @@ func run(log *logger.Logger) error {
 	if err := seeder.Seed(db); err != nil {
 		return err
 	}
+
+	s := service.New(log, db)
+	s.Auth["user"] = "pw"
+
 	srv := &http.Server{
 		Addr:    "127.0.0.1:3000",
-		Handler: service.New(log, db),
+		Handler: s,
 	}
 	go func() {
 		log.Infof("listening on %s", srv.Addr)
