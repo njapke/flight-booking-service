@@ -22,8 +22,6 @@ func main() {
 }
 
 func run(log *logger.Logger) error {
-	defer log.Sync()
-
 	db, err := database.New()
 	if err != nil {
 		return err
@@ -36,8 +34,11 @@ func run(log *logger.Logger) error {
 	s.Auth["user"] = "pw"
 
 	srv := &http.Server{
-		Addr:    "127.0.0.1:3000",
-		Handler: s,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
+		Addr:         "127.0.0.1:3000",
+		Handler:      s,
 	}
 	go func() {
 		log.Infof("listening on %s", srv.Addr)
