@@ -1,0 +1,29 @@
+config:
+  target: "http://localhost:3000"
+  processor: ./helper.js
+  phases:
+    - duration: 10
+      arrivalRate: 30
+      name: Test
+
+scenarios:
+  - name: "Book flight"
+    flow:
+      - get:
+          url: "/flights"
+          capture:
+            - json: "$"
+              as: "flights"
+      - function: setRandomFlightId
+      - get:
+          url: "/flights/{{ flightId }}/seats"
+          capture:
+            - json: "$"
+              as: "seats"
+      - function: setBookingRequest
+      - post:
+          url: "/bookings"
+          json: "{{ bookingRequest }}"
+          auth:
+            user: user
+            pass: pw
