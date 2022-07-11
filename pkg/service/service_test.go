@@ -80,20 +80,23 @@ func TestGetFlight(t *testing.T) {
 	require.Equal(t, flight, &flightRes)
 }
 
+func putBookingRequestData(s *Service) error {
+	seats := []database.Model{
+		&models.Flight{ID: "123", From: "AAA", To: "BBB", Status: "test"},
+		&models.Seat{FlightID: "123", Seat: "A1", Row: 1, Price: 10, Available: false},
+		&models.Seat{FlightID: "123", Seat: "B1", Row: 1, Price: 10, Available: true},
+		&models.Seat{FlightID: "123", Seat: "C1", Row: 1, Price: 10, Available: true},
+		&models.Seat{FlightID: "123", Seat: "F3", Row: 3, Price: 10, Available: false},
+	}
+	return s.db.Put(seats...)
+}
+
 func TestCreateBooking(t *testing.T) {
 	s := initService(t)
 	defer func() {
 		require.NoError(t, s.db.Close())
 	}()
-	flight := &models.Flight{ID: "123", From: "AAA", To: "BBB", Status: "test"}
-	require.NoError(t, s.db.Put(flight))
-	seats := []database.Model{
-		&models.Seat{FlightID: flight.ID, Seat: "A1", Row: 1, Price: 10, Available: false},
-		&models.Seat{FlightID: flight.ID, Seat: "B1", Row: 1, Price: 10, Available: true},
-		&models.Seat{FlightID: flight.ID, Seat: "C1", Row: 1, Price: 10, Available: true},
-		&models.Seat{FlightID: flight.ID, Seat: "F3", Row: 3, Price: 10, Available: false},
-	}
-	require.NoError(t, s.db.Put(seats...))
+	require.NoError(t, putBookingRequestData(s))
 
 	// check if seats are correctly stored in database
 	res := sendRequest(s, "GET", "/flights/123/seats", nil)
@@ -103,7 +106,7 @@ func TestCreateBooking(t *testing.T) {
 	require.Len(t, resSeats, 2)
 
 	bookingRequest := &models.Booking{
-		FlightID: flight.ID,
+		FlightID: "123",
 		Passengers: []models.Passenger{
 			{Name: "John", Seat: "B1"},
 			{Name: "Jane", Seat: "C1"},
@@ -143,18 +146,10 @@ func TestCreateInvalidBooking(t *testing.T) {
 	defer func() {
 		require.NoError(t, s.db.Close())
 	}()
-	flight := &models.Flight{ID: "123", From: "AAA", To: "BBB", Status: "test"}
-	require.NoError(t, s.db.Put(flight))
-	seats := []database.Model{
-		&models.Seat{FlightID: flight.ID, Seat: "A1", Row: 1, Price: 10, Available: false},
-		&models.Seat{FlightID: flight.ID, Seat: "B1", Row: 1, Price: 10, Available: true},
-		&models.Seat{FlightID: flight.ID, Seat: "C1", Row: 1, Price: 10, Available: true},
-		&models.Seat{FlightID: flight.ID, Seat: "F3", Row: 3, Price: 10, Available: false},
-	}
-	require.NoError(t, s.db.Put(seats...))
+	require.NoError(t, putBookingRequestData(s))
 
 	bookingRequest := &models.Booking{
-		FlightID: flight.ID,
+		FlightID: "123",
 		Passengers: []models.Passenger{
 			{Name: "John", Seat: "A1"},
 			{Name: "Jane", Seat: "B1"},
