@@ -10,10 +10,10 @@ import (
 	"github.com/christophwitzko/flight-booking-service/pkg/database/models"
 )
 
-func generateSeats(flightId string) []*models.Seat {
-	seats := make([]*models.Seat, 174)
+func generateSeats(flightId string, rows int) []*models.Seat {
+	seats := make([]*models.Seat, rows*6)
 	i := 0
-	for row := 1; row <= 30; row++ {
+	for row := 1; row <= rows+1; row++ {
 		if row == 13 {
 			continue
 		}
@@ -31,7 +31,7 @@ func generateSeats(flightId string) []*models.Seat {
 	return seats
 }
 
-func generateFlight() (*models.Flight, []*models.Seat) {
+func generateFlight(rows int) (*models.Flight, []*models.Seat) {
 	startTime := gofakeit.DateRange(time.Now(), time.Now().Add(time.Hour*48))
 	randomFlightDuration := time.Duration(gofakeit.IntRange(30, 300)) * time.Minute
 	flight := &models.Flight{
@@ -43,13 +43,17 @@ func generateFlight() (*models.Flight, []*models.Seat) {
 		Status:    gofakeit.RandomString([]string{"scheduled", "cancelled", "delayed"}),
 	}
 
-	return flight, generateSeats(flight.ID)
+	return flight, generateSeats(flight.ID, rows)
 }
 
 func Seed(db *database.Database) error {
+	return SeedWithSize(db, 100, 29)
+}
+
+func SeedWithSize(db *database.Database, flights, seatRowsPerFlight int) error {
 	gofakeit.Seed(999)
-	for i := 0; i < 100; i++ {
-		f, seats := generateFlight()
+	for i := 0; i < flights; i++ {
+		f, seats := generateFlight(seatRowsPerFlight)
 		if err := db.Put(f); err != nil {
 			return err
 		}
