@@ -178,15 +178,18 @@ func BenchmarkFlights(b *testing.B) {
 	}
 }
 
+func findFlightId(db *database.Database) string {
+	flights, _ := db.Values(&models.Flight{})
+	return flights[0].Key()
+}
+
 func BenchmarkFlight(b *testing.B) {
 	db, _ := database.New()
 	_ = seeder.Seed(db)
 	s := New(logger.NewNop(), db)
 
-	flights, _ := db.Values(&models.Flight{})
-
 	responseRecorder := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", fmt.Sprintf("/flights/%s", flights[0].Key()), nil)
+	request, _ := http.NewRequest("GET", fmt.Sprintf("/flights/%s", findFlightId(db)), nil)
 	request.Header.Set("X-Forwarded-For", "127.0.0.1")
 
 	b.ReportAllocs()
@@ -201,10 +204,8 @@ func BenchmarkSeats(b *testing.B) {
 	_ = seeder.Seed(db)
 	s := New(logger.NewNop(), db)
 
-	flights, _ := db.Values(&models.Flight{})
-
 	responseRecorder := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", fmt.Sprintf("/flights/%s/seats", flights[0].Key()), nil)
+	request, _ := http.NewRequest("GET", fmt.Sprintf("/flights/%s/seats", findFlightId(db)), nil)
 	request.Header.Set("X-Forwarded-For", "127.0.0.1")
 
 	b.ReportAllocs()
