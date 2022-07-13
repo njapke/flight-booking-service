@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"testing"
 
 	"github.com/christophwitzko/flight-booking-service/pkg/database/models"
@@ -157,4 +158,32 @@ func TestValuesRawValues(t *testing.T) {
 	var flights []*models.Flight
 	require.NoError(t, json.NewDecoder(buf).Decode(&flights))
 	require.ElementsMatch(t, originalFlights, flights)
+}
+
+func BenchmarkValues(b *testing.B) {
+	db, _ := New()
+	for i := 0; i < 1000; i++ {
+		_ = db.Put(&models.Flight{ID: fmt.Sprintf("%d", i)})
+	}
+
+	emptyFlight := &models.Flight{}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = db.Values(emptyFlight)
+	}
+}
+
+func BenchmarkRawValues(b *testing.B) {
+	db, _ := New()
+	for i := 0; i < 1000; i++ {
+		_ = db.Put(&models.Flight{ID: fmt.Sprintf("%d", i)})
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = db.RawValues(io.Discard, "flights")
+	}
 }
