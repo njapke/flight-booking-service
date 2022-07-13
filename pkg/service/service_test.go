@@ -17,7 +17,7 @@ import (
 )
 
 func sendRequest(s http.Handler, method, path string, body io.Reader, modReqFns ...func(req *http.Request)) *httptest.ResponseRecorder {
-	req, _ := http.NewRequest(method, path, body)
+	req := httptest.NewRequest(method, path, body)
 	for _, f := range modReqFns {
 		f(req)
 	}
@@ -168,7 +168,7 @@ func BenchmarkFlights(b *testing.B) {
 	s := New(logger.NewNop(), db)
 
 	responseRecorder := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", "/flights", nil)
+	request := httptest.NewRequest("GET", "/flights", nil)
 	request.Header.Set("X-Forwarded-For", "127.0.0.1")
 
 	b.ReportAllocs()
@@ -189,7 +189,7 @@ func BenchmarkFlight(b *testing.B) {
 	s := New(logger.NewNop(), db)
 
 	responseRecorder := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", fmt.Sprintf("/flights/%s", findFlightId(db)), nil)
+	request := httptest.NewRequest("GET", fmt.Sprintf("/flights/%s", findFlightId(db)), nil)
 	request.Header.Set("X-Forwarded-For", "127.0.0.1")
 
 	b.ReportAllocs()
@@ -205,7 +205,7 @@ func BenchmarkSeats(b *testing.B) {
 	s := New(logger.NewNop(), db)
 
 	responseRecorder := httptest.NewRecorder()
-	request, _ := http.NewRequest("GET", fmt.Sprintf("/flights/%s/seats", findFlightId(db)), nil)
+	request := httptest.NewRequest("GET", fmt.Sprintf("/flights/%s/seats", findFlightId(db)), nil)
 	request.Header.Set("X-Forwarded-For", "127.0.0.1")
 
 	b.ReportAllocs()
