@@ -67,3 +67,16 @@
   }
 ]
 ```
+
+# Useful Commands
+
+```bash
+
+go test -run=^# -bench=. -cpuprofile=./bench.out ./...
+
+curl http://localhost:3000/debug/pprof/profile?seconds=10 > app-bench.out
+
+go tool pprof -http :9999 ./app-bench.out
+
+go tool pprof -http :9999 -diff_base=./bench-slow.out ./bench-fast.out
+```

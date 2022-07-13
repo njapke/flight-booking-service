@@ -21,6 +21,7 @@ scenarios:
             - json: "$"
               as: "seats"
       - function: setBookingRequest
+      - think: 3
       - post:
           url: "/bookings"
           json: "{{ bookingRequest }}"
