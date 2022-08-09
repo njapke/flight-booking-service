@@ -98,8 +98,8 @@ func TestValuesWithPrefixes(t *testing.T) {
 	}
 
 	for _, p := range []string{"0", "1"} {
-		values, err := db.Values(&models.Seat{}, p)
-		require.NoError(t, err)
+		values, vErr := db.Values(&models.Seat{}, p)
+		require.NoError(t, vErr)
 		require.Len(t, values, 100)
 	}
 

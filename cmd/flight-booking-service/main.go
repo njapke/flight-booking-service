@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"os"
 	"os/signal"
@@ -26,7 +27,8 @@ func run(log *logger.Logger) error {
 	if err != nil {
 		return err
 	}
-	if err := seeder.Seed(db); err != nil {
+	err = seeder.Seed(db)
+	if err != nil {
 		return err
 	}
 
@@ -42,8 +44,9 @@ func run(log *logger.Logger) error {
 	}
 	go func() {
 		log.Infof("listening on %s", srv.Addr)
-		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-			log.Error(err)
+		sErr := srv.ListenAndServe()
+		if !errors.Is(sErr, http.ErrServerClosed) {
+			log.Error(sErr)
 		}
 	}()
 
@@ -55,9 +58,9 @@ func run(log *logger.Logger) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if err := srv.Shutdown(ctx); err == context.DeadlineExceeded {
+	if err = srv.Shutdown(ctx); errors.Is(err, context.DeadlineExceeded) {
 		log.Info("closing server...")
-		if err := srv.Close(); err != nil {
+		if err = srv.Close(); err != nil {
 			log.Error(err)
 		}
 		// finishing pending database writes
@@ -67,8 +70,5 @@ func run(log *logger.Logger) error {
 	}
 
 	log.Info("closing database...")
-	if err := db.Close(); err != nil {
-		return err
-	}
-	return nil
+	return db.Close()
 }

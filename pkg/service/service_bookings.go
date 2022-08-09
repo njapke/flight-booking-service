@@ -21,7 +21,7 @@ func (s *Service) handlerGetBookings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) handlerCreateBooking(w http.ResponseWriter, r *http.Request) {
-	userId, _, _ := r.BasicAuth()
+	userID, _, _ := r.BasicAuth()
 	var bookingRequest models.Booking
 	if err := json.NewDecoder(r.Body).Decode(&bookingRequest); err != nil {
 		s.sendError(w, err.Error(), http.StatusBadRequest)
@@ -59,7 +59,7 @@ func (s *Service) handlerCreateBooking(w http.ResponseWriter, r *http.Request) {
 
 	booking := &models.Booking{
 		ID:         uuid.NewString(),
-		UserID:     userId,
+		UserID:     userID,
 		FlightID:   flight.ID,
 		Price:      price,
 		Status:     "confirmed",

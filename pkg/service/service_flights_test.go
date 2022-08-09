@@ -33,7 +33,7 @@ func BenchmarkHandlerGetFlight(b *testing.B) {
 	req := httptest.NewRequest("GET", "/", nil)
 	rctx := chi.NewRouteContext()
 	rctx.Reset()
-	rctx.URLParams.Add("id", findFlightId(db))
+	rctx.URLParams.Add("id", findFlightID(db))
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 	resWriter := httptest.NewRecorder()
@@ -53,7 +53,7 @@ func BenchmarkHandlerGetFlightSeats(b *testing.B) {
 	req := httptest.NewRequest("GET", "/", nil)
 	rctx := chi.NewRouteContext()
 	rctx.Reset()
-	rctx.URLParams.Add("id", findFlightId(db))
+	rctx.URLParams.Add("id", findFlightID(db))
 	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, rctx))
 
 	resWriter := httptest.NewRecorder()

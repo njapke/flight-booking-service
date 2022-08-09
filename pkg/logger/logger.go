@@ -26,8 +26,8 @@ func NewNop() *Logger {
 
 func (l *Logger) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		reqId := middleware.GetReqID(r.Context())
-		l.Infow("request", "method", r.Method, "path", r.URL.Path, "requestId", reqId)
+		reqID := middleware.GetReqID(r.Context())
+		l.Infow("request", "method", r.Method, "path", r.URL.Path, "requestId", reqID)
 		next.ServeHTTP(w, r)
 	})
 }

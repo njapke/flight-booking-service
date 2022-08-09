@@ -44,10 +44,10 @@ func BenchmarkHandlerCreateBooking(b *testing.B) {
 	amountOfBookingRequests := 300000
 	bookingRequests := make([]io.ReadCloser, amountOfBookingRequests)
 	for i := 0; i < amountOfBookingRequests; i++ {
-		flightId := strconv.Itoa(i)
-		_ = db.Put(&models.Flight{ID: flightId}, &models.Seat{FlightID: flightId, Seat: "A1", Available: true})
+		flightID := strconv.Itoa(i)
+		_ = db.Put(&models.Flight{ID: flightID}, &models.Seat{FlightID: flightID, Seat: "A1", Available: true})
 		bookingRequest := &models.Booking{
-			FlightID:   flightId,
+			FlightID:   flightID,
 			Passengers: []models.Passenger{{Name: "user", Seat: "A1"}},
 		}
 		payload, _ := json.Marshal(bookingRequest)

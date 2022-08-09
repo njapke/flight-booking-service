@@ -139,8 +139,8 @@ func (db *Database) RawValues(w io.Writer, prefixes ...string) error {
 		prefix := []byte(strings.Join(prefixes, "/"))
 		for it.Seek(prefix); it.ValidForPrefix(prefix); {
 			item := it.Item()
-			err := item.Value(func(val []byte) error {
-				_, err := w.Write(val)
+			err = item.Value(func(val []byte) error {
+				_, err = w.Write(val)
 				return err
 			})
 			if err != nil {
@@ -148,7 +148,7 @@ func (db *Database) RawValues(w io.Writer, prefixes ...string) error {
 			}
 			it.Next()
 			if it.ValidForPrefix(prefix) {
-				_, err := w.Write([]byte(","))
+				_, err = w.Write([]byte(","))
 				if err != nil {
 					return err
 				}

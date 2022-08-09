@@ -18,32 +18,33 @@ func (s *Service) handlerGetFlights(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) handlerGetFlight(w http.ResponseWriter, r *http.Request) {
-	flightId := chi.URLParam(r, "id")
-	flightData, err := s.db.RawGet("flights", flightId)
+	flightID := chi.URLParam(r, "id")
+	flightData, err := s.db.RawGet("flights", flightID)
 	if err == nil {
 		s.contentTypeJSON(w)
-		if _, err := w.Write(flightData); err != nil {
+		if _, err = w.Write(flightData); err != nil {
 			s.log.Errorf("write error: %v", err)
 		}
+		return
 	} else if errors.Is(err, badger.ErrKeyNotFound) {
 		s.sendError(w, "flight not found", http.StatusNotFound)
-	} else {
-		s.sendError(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
+	s.sendError(w, err.Error(), http.StatusInternalServerError)
 }
 
 func (s *Service) handlerGetFlightSeats(w http.ResponseWriter, r *http.Request) {
-	flightId := chi.URLParam(r, "id")
-	allSeats, err := s.db.Values(&models.Seat{}, flightId)
+	flightID := chi.URLParam(r, "id")
+	allSeats, err := s.db.Values(&models.Seat{}, flightID)
 	if err != nil {
 		s.sendError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	seats := make([]*models.Seat, 0)
 	for _, seat := range allSeats {
-		seat := seat.(*models.Seat)
-		if seat.Available {
-			seats = append(seats, seat)
+		s := seat.(*models.Seat)
+		if s.Available {
+			seats = append(seats, s)
 		}
 	}
 	if len(seats) == 0 {

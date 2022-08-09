@@ -10,7 +10,7 @@ import (
 	"github.com/christophwitzko/flight-booking-service/pkg/database/models"
 )
 
-func generateSeats(flightId string, rows int) []*models.Seat {
+func generateSeats(flightID string, rows int) []*models.Seat {
 	seats := make([]*models.Seat, rows*6)
 	i := 0
 	for row := 1; row <= rows+1; row++ {
@@ -19,7 +19,7 @@ func generateSeats(flightId string, rows int) []*models.Seat {
 		}
 		for _, seat := range []string{"A", "B", "C", "D", "E", "F"} {
 			seats[i] = &models.Seat{
-				FlightID:  flightId,
+				FlightID:  flightID,
 				Seat:      fmt.Sprintf("%d%s", row, seat),
 				Row:       row,
 				Price:     gofakeit.IntRange(20, 500),
