@@ -53,8 +53,11 @@ func TestPutGet(t *testing.T) {
 	var res models.Flight
 	err = db.Get(u.Key(), &res)
 	require.NoError(t, err)
-
 	require.Equal(t, u, &res)
+
+	res2, err := Get[*models.Flight](db, u.Key())
+	require.NoError(t, err)
+	require.Equal(t, u, res2)
 }
 
 func TestValues(t *testing.T) {
@@ -73,8 +76,11 @@ func TestValues(t *testing.T) {
 
 	values, err := db.Values(&models.Flight{})
 	require.NoError(t, err)
-
 	require.ElementsMatch(t, expectedValues, values)
+
+	values2, err := Values[*models.Flight](db)
+	require.NoError(t, err)
+	require.ElementsMatch(t, expectedValues, values2)
 }
 
 func TestValuesWithPrefixes(t *testing.T) {
@@ -141,11 +147,22 @@ func BenchmarkGet(b *testing.B) {
 	db, _ := New()
 	_ = db.Put(&models.Flight{ID: "123"})
 
-	var flight models.Flight
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
+		var flight models.Flight
 		_ = db.Get("123", &flight)
+	}
+}
+
+func BenchmarkGetGenerics(b *testing.B) {
+	db, _ := New()
+	_ = db.Put(&models.Flight{ID: "123"})
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = Get[*models.Flight](db, "123")
 	}
 }
 
@@ -172,6 +189,19 @@ func BenchmarkValues(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, _ = db.Values(emptyFlight)
+	}
+}
+
+func BenchmarkValuesGenerics(b *testing.B) {
+	db, _ := New()
+	for i := 0; i < 1000; i++ {
+		_ = db.Put(&models.Flight{ID: fmt.Sprintf("%d", i)})
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = Values[*models.Flight](db)
 	}
 }
 

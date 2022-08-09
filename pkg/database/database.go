@@ -81,6 +81,23 @@ func (db *Database) Get(key string, val Model) error {
 	return nil
 }
 
+func Get[T Model](db *Database, key string) (T, error) {
+	var val T
+	err := db.db.View(func(txn *badger.Txn) error {
+		item, err := txn.Get(db.getPrefixedKey(val.Collection(), key))
+		if err != nil {
+			return err
+		}
+		return item.Value(func(value []byte) error {
+			return json.Unmarshal(value, &val)
+		})
+	})
+	if err != nil {
+		return val, err
+	}
+	return val, nil
+}
+
 func (db *Database) RawGet(collection, key string) ([]byte, error) {
 	var val []byte
 	err := db.db.View(func(txn *badger.Txn) error {
@@ -111,6 +128,35 @@ func (db *Database) Values(forModel Model, prefixes ...string) ([]Model, error) 
 			err := item.Value(func(val []byte) error {
 				modelVal := reflect.New(reflect.TypeOf(forModel).Elem()).Interface().(Model)
 				if err := json.Unmarshal(val, modelVal); err != nil {
+					return err
+				}
+				values = append(values, modelVal)
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return values, nil
+}
+
+func Values[T Model](db *Database, prefixes ...string) ([]T, error) {
+	values := make([]T, 0)
+	err := db.db.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+		var collectionType T
+		prefix := db.getPrefixedKey(collectionType.Collection(), strings.Join(prefixes, "/"))
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			item := it.Item()
+			err := item.Value(func(val []byte) error {
+				var modelVal T
+				if err := json.Unmarshal(val, &modelVal); err != nil {
 					return err
 				}
 				values = append(values, modelVal)
