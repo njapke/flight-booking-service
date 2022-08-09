@@ -41,7 +41,7 @@ func BenchmarkHandlerCreateBooking(b *testing.B) {
 	_ = seeder.Seed(db)
 	s := New(logger.NewNop(), db)
 
-	amountOfBookingRequests := 300000
+	amountOfBookingRequests := 90000
 	bookingRequests := make([]io.ReadCloser, amountOfBookingRequests)
 	for i := 0; i < amountOfBookingRequests; i++ {
 		flightID := strconv.Itoa(i)
