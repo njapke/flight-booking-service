@@ -12,7 +12,7 @@ import (
 
 func (s *Service) handlerGetBookings(w http.ResponseWriter, r *http.Request) {
 	user, _, _ := r.BasicAuth()
-	bookings, err := s.db.Values(&models.Booking{}, user)
+	bookings, err := database.Values[*models.Booking](s.db, user)
 	if err != nil {
 		s.sendError(w, err.Error(), http.StatusInternalServerError)
 		return

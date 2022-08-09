@@ -1,4 +1,6 @@
 # flight-booking-service
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/christophwitzko/flight-booking-service)](https://pkg.go.dev/github.com/christophwitzko/flight-booking-service)
+
 
 ### GET /flights
 

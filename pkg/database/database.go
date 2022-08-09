@@ -50,6 +50,7 @@ func (db *Database) toEntry(m Model) (*badger.Entry, error) {
 	return badger.NewEntry(db.getPrefixedKey(m.Collection(), m.Key()), entryValue), nil
 }
 
+// Put one ore more models into the database.
 func (db *Database) Put(models ...Model) error {
 	return db.db.Update(func(txn *badger.Txn) error {
 		for _, m := range models {
@@ -65,6 +66,7 @@ func (db *Database) Put(models ...Model) error {
 	})
 }
 
+// Get retrieves a model from the database. If the model is not found, a bader.ErrKeyNotFound error is returned.
 func (db *Database) Get(key string, val Model) error {
 	err := db.db.View(func(txn *badger.Txn) error {
 		item, err := txn.Get(db.getPrefixedKey(val.Collection(), key))
@@ -81,6 +83,7 @@ func (db *Database) Get(key string, val Model) error {
 	return nil
 }
 
+// Get is the generic equivalent of Database.Get.
 func Get[T Model](db *Database, key string) (T, error) {
 	var val T
 	err := db.db.View(func(txn *badger.Txn) error {
@@ -98,6 +101,7 @@ func Get[T Model](db *Database, key string) (T, error) {
 	return val, nil
 }
 
+// RawGet return the raw value of a key in JSON format.
 func (db *Database) RawGet(collection, key string) ([]byte, error) {
 	var val []byte
 	err := db.db.View(func(txn *badger.Txn) error {
@@ -117,6 +121,7 @@ func (db *Database) RawGet(collection, key string) ([]byte, error) {
 	return val, nil
 }
 
+// Values returns an list of models with the same type as the forModel parameter.
 func (db *Database) Values(forModel Model, prefixes ...string) ([]Model, error) {
 	values := make([]Model, 0)
 	err := db.db.View(func(txn *badger.Txn) error {
@@ -145,6 +150,7 @@ func (db *Database) Values(forModel Model, prefixes ...string) ([]Model, error) 
 	return values, nil
 }
 
+// Values is the generic equivalent of Database.Values.
 func Values[T Model](db *Database, prefixes ...string) ([]T, error) {
 	values := make([]T, 0)
 	err := db.db.View(func(txn *badger.Txn) error {
@@ -174,6 +180,7 @@ func Values[T Model](db *Database, prefixes ...string) ([]T, error) {
 	return values, nil
 }
 
+// RawValues writes the raw database values of the prefixes to the provided writer.
 func (db *Database) RawValues(w io.Writer, prefixes ...string) error {
 	return db.db.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/christophwitzko/flight-booking-service/pkg/database"
 	"github.com/christophwitzko/flight-booking-service/pkg/database/models"
 	"github.com/dgraph-io/badger/v3"
 	"github.com/go-chi/chi/v5"
@@ -35,21 +36,20 @@ func (s *Service) handlerGetFlight(w http.ResponseWriter, r *http.Request) {
 
 func (s *Service) handlerGetFlightSeats(w http.ResponseWriter, r *http.Request) {
 	flightID := chi.URLParam(r, "id")
-	allSeats, err := s.db.Values(&models.Seat{}, flightID)
+	allSeats, err := database.Values[*models.Seat](s.db, flightID)
 	if err != nil {
 		s.sendError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	seats := make([]*models.Seat, 0)
+	availableSeats := make([]*models.Seat, 0)
 	for _, seat := range allSeats {
-		s := seat.(*models.Seat)
-		if s.Available {
-			seats = append(seats, s)
+		if seat.Available {
+			availableSeats = append(availableSeats, seat)
 		}
 	}
-	if len(seats) == 0 {
+	if len(availableSeats) == 0 {
 		s.sendError(w, "no seats available", http.StatusNotFound)
 		return
 	}
-	s.writeJSON(w, seats)
+	s.writeJSON(w, availableSeats)
 }
