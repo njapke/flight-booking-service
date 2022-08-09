@@ -22,6 +22,16 @@ func main() {
 	}
 }
 
+func getBindAddress() string {
+	if bindAddress := os.Getenv("BIND_ADDRESS"); bindAddress != "" {
+		return bindAddress
+	}
+	if port := os.Getenv("PORT"); port != "" {
+		return ":" + port
+	}
+	return "127.0.0.1:3000"
+}
+
 func run(log *logger.Logger) error {
 	db, err := database.New()
 	if err != nil {
@@ -39,19 +49,27 @@ func run(log *logger.Logger) error {
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  60 * time.Second,
-		Addr:         "127.0.0.1:3000",
+		Addr:         getBindAddress(),
 		Handler:      s,
 	}
+
+	listenErrCh := make(chan error)
 	go func() {
 		log.Infof("listening on %s", srv.Addr)
 		sErr := srv.ListenAndServe()
 		if !errors.Is(sErr, http.ErrServerClosed) {
-			log.Error(sErr)
+			listenErrCh <- sErr
 		}
+		close(listenErrCh)
 	}()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	<-ctx.Done()
+	select {
+	case <-ctx.Done():
+		log.Info("shutting down...")
+	case err = <-listenErrCh:
+		log.Errorf("error listening on %s: %s", srv.Addr, err)
+	}
 	stop()
 
 	log.Info("stopping server...")
