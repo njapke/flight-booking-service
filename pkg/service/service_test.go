@@ -65,6 +65,23 @@ func TestGetFlights(t *testing.T) {
 	require.Len(t, flights, 100)
 }
 
+func TestGetFlightsQuery(t *testing.T) {
+	s := initService(t)
+	defer func() {
+		require.NoError(t, s.db.Close())
+	}()
+
+	flight := &models.Flight{ID: "123", From: "AAA", To: "BBB", Status: "test"}
+	require.NoError(t, s.db.Put(flight))
+
+	res := sendRequest(s, "GET", "/flights?from=AAA&to=BBB", nil)
+	require.Equal(t, http.StatusOK, res.Code)
+	var flights []*models.Flight
+	require.NoError(t, json.Unmarshal(res.Body.Bytes(), &flights))
+	require.Len(t, flights, 1)
+	require.Equal(t, flight, flights[0])
+}
+
 func TestGetFlight(t *testing.T) {
 	s := initService(t)
 	defer func() {

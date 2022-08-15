@@ -10,12 +10,44 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func (s *Service) handlerGetFlights(w http.ResponseWriter, r *http.Request) {
-	s.contentTypeJSON(w)
-	err := s.db.RawValues(w, "flights")
-	if err != nil {
-		s.log.Errorf("error getting flights: %v", err)
+func filterFlights(flights []*models.Flight, queryFrom, queryTo, queryStatus string) []*models.Flight {
+	foundFlights := make([]*models.Flight, 0)
+	for _, flight := range flights {
+		if (queryFrom == "" || flight.From == queryFrom) &&
+			(queryTo == "" || flight.To == queryTo) &&
+			(queryStatus == "" || flight.Status == queryStatus) {
+			foundFlights = append(foundFlights, flight)
+		}
 	}
+	return foundFlights
+}
+
+func (s *Service) handlerGetFlights(w http.ResponseWriter, r *http.Request) {
+	queryFrom := r.URL.Query().Get("from")
+	queryTo := r.URL.Query().Get("to")
+	queryStatus := r.URL.Query().Get("status")
+
+	if queryFrom == "" && queryTo == "" && queryStatus == "" {
+		s.contentTypeJSON(w)
+		err := s.db.RawValues(w, "flights")
+		if err != nil {
+			s.log.Errorf("error getting flights: %v", err)
+		}
+		return
+	}
+
+	allFlights, err := database.Values[*models.Flight](s.db)
+	if err != nil {
+		s.sendError(w, "could not get flights", http.StatusInternalServerError)
+		return
+	}
+
+	foundFlights := filterFlights(allFlights, queryFrom, queryTo, queryStatus)
+	if len(foundFlights) == 0 {
+		s.sendError(w, "no flights found", http.StatusBadRequest)
+		return
+	}
+	s.writeJSON(w, foundFlights)
 }
 
 func (s *Service) handlerGetFlight(w http.ResponseWriter, r *http.Request) {

@@ -17,11 +17,25 @@ func BenchmarkHandlerGetFlights(b *testing.B) {
 	s := New(logger.NewNop(), db)
 
 	resWriter := httptest.NewRecorder()
-
+	req := httptest.NewRequest("GET", "/", nil)
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		s.handlerGetFlights(resWriter, nil)
+		s.handlerGetFlights(resWriter, req)
+	}
+}
+
+func BenchmarkHandlerGetFlightsQuery(b *testing.B) {
+	db, _ := database.New()
+	_ = seeder.Seed(db)
+	s := New(logger.NewNop(), db)
+
+	resWriter := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/?from=AAA", nil)
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		s.handlerGetFlights(resWriter, req)
 	}
 }
 
