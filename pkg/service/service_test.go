@@ -179,6 +179,24 @@ func TestCreateInvalidBooking(t *testing.T) {
 	require.Equal(t, http.StatusBadRequest, res.Code)
 }
 
+func TestGetDestinations(t *testing.T) {
+	s := initService(t)
+	defer func() {
+		require.NoError(t, s.db.Close())
+	}()
+
+	flight := &models.Flight{ID: "123", From: "AAA", To: "BBB", Status: "test"}
+	require.NoError(t, s.db.Put(flight))
+
+	res := sendRequest(s, "GET", "/destinations", nil)
+	require.Equal(t, http.StatusOK, res.Code)
+	var destinations map[string][]string
+	require.NoError(t, json.Unmarshal(res.Body.Bytes(), &destinations))
+	require.Len(t, destinations, 2)
+	require.Contains(t, destinations["from"], "AAA")
+	require.Contains(t, destinations["to"], "BBB")
+}
+
 func BenchmarkFlights(b *testing.B) {
 	db, _ := database.New()
 	_ = seeder.Seed(db)

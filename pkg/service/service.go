@@ -77,6 +77,8 @@ func (s *Service) setupRoutes() {
 		r.Get("/{id}/seats", s.handlerGetFlightSeats)
 	})
 
+	s.router.Get("/destinations", s.handlerGetDestinations)
+
 	s.router.
 		With(middleware.BasicAuth("auth", s.Auth)).
 		Route("/bookings", func(r chi.Router) {

@@ -78,3 +78,16 @@ func BenchmarkHandlerGetFlightSeats(b *testing.B) {
 		s.handlerGetFlightSeats(resWriter, req)
 	}
 }
+
+func BenchmarkHandlerGetDestinations(b *testing.B) {
+	db, _ := database.New()
+	_ = seeder.Seed(db)
+	s := New(logger.NewNop(), db)
+
+	resWriter := httptest.NewRecorder()
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		s.handlerGetDestinations(resWriter, nil)
+	}
+}

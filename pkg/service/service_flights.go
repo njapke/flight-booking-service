@@ -50,6 +50,36 @@ func (s *Service) handlerGetFlights(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, foundFlights)
 }
 
+func (s *Service) handlerGetDestinations(w http.ResponseWriter, r *http.Request) {
+	allFlights, err := database.Values[*models.Flight](s.db)
+	if err != nil {
+		s.sendError(w, "could not get flights", http.StatusInternalServerError)
+		return
+	}
+
+	from := make(map[string]bool)
+	to := make(map[string]bool)
+	for _, flight := range allFlights {
+		from[flight.From] = true
+		to[flight.To] = true
+	}
+
+	ret := struct {
+		From []string `json:"from"`
+		To   []string `json:"to"`
+	}{
+		From: make([]string, 0, len(from)),
+		To:   make([]string, 0, len(to)),
+	}
+	for k := range from {
+		ret.From = append(ret.From, k)
+	}
+	for k := range to {
+		ret.To = append(ret.To, k)
+	}
+	s.writeJSON(w, ret)
+}
+
 func (s *Service) handlerGetFlight(w http.ResponseWriter, r *http.Request) {
 	flightID := chi.URLParam(r, "id")
 	flightData, err := s.db.RawGet("flights", flightID)
