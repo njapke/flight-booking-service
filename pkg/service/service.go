@@ -30,7 +30,6 @@ func New(logger *logger.Logger, db *database.Database) *Service {
 }
 
 func (s *Service) setupMiddleware() {
-	// s.router.Use(middleware.CleanPath)
 	s.router.Use(middleware.RequestID)
 	s.router.Use(middleware.RealIP)
 	s.router.Use(middleware.Compress(5))
@@ -71,11 +70,13 @@ func (s *Service) setupRoutes() {
 
 	s.router.Get("/", s.handlerIndex)
 
-	s.router.Route("/flights", func(r chi.Router) {
-		r.Get("/", s.handlerGetFlights)
-		r.Get("/{id}", s.handlerGetFlight)
-		r.Get("/{id}/seats", s.handlerGetFlightSeats)
-	})
+	s.router.
+		With(middleware.CleanPath).
+		Route("/flights", func(r chi.Router) {
+			r.Get("/", s.handlerGetFlights)
+			r.Get("/{id}", s.handlerGetFlight)
+			r.Get("/{id}/seats", s.handlerGetFlightSeats)
+		})
 
 	s.router.Get("/destinations", s.handlerGetDestinations)
 

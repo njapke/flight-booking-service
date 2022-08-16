@@ -16,7 +16,22 @@ import (
 )
 
 func main() {
-	log := logger.New()
+	level := logger.DebugLevel
+	levelName := os.Getenv("LOG_LEVEL")
+	switch levelName {
+	case "debug":
+		level = logger.DebugLevel
+	case "info":
+		level = logger.InfoLevel
+	case "warn":
+		level = logger.WarnLevel
+	case "error":
+		level = logger.ErrorLevel
+	}
+	log := logger.New(level)
+	if levelName != "" {
+		log.Infof("log level: %s", levelName)
+	}
 	if err := run(log); err != nil {
 		log.Fatal(err)
 	}
