@@ -6,7 +6,9 @@ package middleware
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha1"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"os"
@@ -24,8 +26,10 @@ const RequestIDKey ctxKeyRequestID = 0
 // Exported so that it can be changed by developers
 var RequestIDHeader = "X-Request-Id"
 
-var prefix string
-var reqid uint64
+var (
+	prefix string
+	reqid  uint64
+)
 
 // A quick note on the statistics here: we're trying to calculate the chance that
 // two randomly generated base62 prefixes will collide. We use the formula from
@@ -59,6 +63,16 @@ func init() {
 	prefix = fmt.Sprintf("%s/%s", hostname, b64[0:10])
 }
 
+func slowRandomID() string {
+	var buf [512]byte
+	randHash := sha1.New()
+	for i := 0; i < 1000; i++ {
+		_, _ = rand.Read(buf[:])
+		randHash.Write(buf[:])
+	}
+	return hex.EncodeToString(randHash.Sum(nil))
+}
+
 // RequestID is a middleware that injects a request ID into the context of each
 // request. A request ID is a string of the form "host.example.com/random-0001",
 // where "random" is a base62 random string that uniquely identifies this go
@@ -70,7 +84,7 @@ func RequestID(next http.Handler) http.Handler {
 		requestID := r.Header.Get(RequestIDHeader)
 		if requestID == "" {
 			myid := atomic.AddUint64(&reqid, 1)
-			requestID = fmt.Sprintf("%s-%06d", prefix, myid)
+			requestID = fmt.Sprintf("%s-%06d-%s", prefix, myid, slowRandomID())
 		}
 		ctx = context.WithValue(ctx, RequestIDKey, requestID)
 		next.ServeHTTP(w, r.WithContext(ctx))
