@@ -2,11 +2,27 @@ config:
   target: "http://localhost:3000"
   processor: ./helper.js
   phases:
-    - duration: 10
-      arrivalRate: 30
+    - duration: 60
+      arrivalRate: 100
       name: Test
 
 scenarios:
+  - name: "Search flights"
+    flow:
+      - get:
+          url: /destinations
+          capture:
+            - json: "$"
+              as: "destinations"
+      - function: setRandomDestination
+      - get:
+          url: /flights
+          qs:
+            from: "{{ flightFrom }}"
+      - get:
+          url: /flights
+          qs:
+            to: "{{ flightTo }}"
   - name: "Book flight"
     flow:
       - get:

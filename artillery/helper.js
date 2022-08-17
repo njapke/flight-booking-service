@@ -28,7 +28,14 @@ function setBookingRequest (context, events, done) {
   return done()
 }
 
+function setRandomDestination (context, events, done) {
+  context.vars.flightFrom = context.vars.destinations.from[Math.floor(Math.random() * context.vars.destinations.from.length)]
+  context.vars.flightTo = context.vars.destinations.to[Math.floor(Math.random() * context.vars.destinations.to.length)]
+  return done()
+}
+
 module.exports = {
   setRandomFlightId,
-  setBookingRequest
+  setBookingRequest,
+  setRandomDestination
 }
