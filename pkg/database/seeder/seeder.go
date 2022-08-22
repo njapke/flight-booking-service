@@ -23,7 +23,7 @@ func generateSeats(flightID string, rows int) []*models.Seat {
 				Seat:      fmt.Sprintf("%d%s", row, seat),
 				Row:       row,
 				Price:     gofakeit.IntRange(20, 500),
-				Available: gofakeit.Bool(),
+				Available: true,
 			}
 			i++
 		}
@@ -40,14 +40,15 @@ func generateFlight(rows int) (*models.Flight, []*models.Seat) {
 		To:        strings.ToUpper(gofakeit.LetterN(3)),
 		Departure: startTime,
 		Arrival:   startTime.Add(randomFlightDuration),
-		Status:    gofakeit.RandomString([]string{"scheduled", "cancelled", "delayed"}),
+		// the scheduled status should be the most common status
+		Status: gofakeit.RandomString([]string{"scheduled", "scheduled", "cancelled", "delayed"}),
 	}
 
 	return flight, generateSeats(flight.ID, rows)
 }
 
 func Seed(db *database.Database) error {
-	return SeedWithSize(db, 100, 29)
+	return SeedWithSize(db, 1000, 29)
 }
 
 func SeedWithSize(db *database.Database, flights, seatRowsPerFlight int) error {
