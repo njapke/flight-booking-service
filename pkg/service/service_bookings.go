@@ -33,7 +33,6 @@ func (s *Service) handlerCreateBooking(w http.ResponseWriter, r *http.Request) {
 	}
 	var flight models.Flight
 	if err := s.db.Get(bookingRequest.FlightID, &flight); err != nil {
-		s.log.Warnf("could not find flight %s: %v", bookingRequest.FlightID, err)
 		s.sendError(w, "could not find flight", http.StatusBadRequest)
 		return
 	}
@@ -44,7 +43,6 @@ func (s *Service) handlerCreateBooking(w http.ResponseWriter, r *http.Request) {
 		var seat models.Seat
 		key := fmt.Sprintf("%s/%s", flight.ID, passenger.Seat)
 		if err := s.db.Get(key, &seat); err != nil {
-			s.log.Warnf("could not find seat %s: %v", key, err)
 			s.sendError(w, "could not find seat", http.StatusBadRequest)
 			return
 		}

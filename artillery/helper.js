@@ -4,6 +4,16 @@ function setRandomFlightId (context, events, done) {
 }
 
 function setBookingRequest (context, events, done) {
+  if (context.vars.seats.error === 'no seats available') {
+    // no seats available
+    // create dummy booking request that will fail
+    context.vars.bookingRequest = {
+      flightId: context.vars.flightId,
+      passengers: [{}, {}]
+    }
+    return done()
+  }
+
   const pickedSeats = []
   function pickRandomSeat () {
     for (let i = 0; i < 10; i++) {
@@ -13,7 +23,8 @@ function setBookingRequest (context, events, done) {
         return seat
       }
     }
-    throw new Error('Could not find an available seat')
+    console.error('Could not find an available seat')
+    return null
   }
 
   const passengers = Array.from(Array(2))

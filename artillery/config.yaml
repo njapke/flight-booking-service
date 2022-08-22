@@ -3,8 +3,11 @@ config:
   processor: ./helper.js
   phases:
     - duration: 60
-      arrivalRate: 100
-      name: Test
+      arrivalRate: 10
+      name: Warm up
+    - duration: 600
+      arrivalRate: 150
+      name: Main
 
 scenarios:
   - name: "Search flights"
@@ -15,6 +18,7 @@ scenarios:
             - json: "$"
               as: "destinations"
       - function: setRandomDestination
+      - think: 1
       - get:
           url: /flights
           qs:
