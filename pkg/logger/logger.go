@@ -2,10 +2,12 @@ package logger
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"golang.org/x/term"
 )
 
 type LogLevel int8
@@ -22,7 +24,12 @@ type Logger struct {
 }
 
 func New(level LogLevel) *Logger {
-	cfg := zap.NewDevelopmentConfig()
+	var cfg zap.Config
+	if term.IsTerminal(int(os.Stderr.Fd())) {
+		cfg = zap.NewDevelopmentConfig()
+	} else {
+		cfg = zap.NewProductionConfig()
+	}
 	cfg.DisableCaller = true
 	cfg.DisableStacktrace = true
 	cfg.Level = zap.NewAtomicLevelAt(zapcore.Level(level))
