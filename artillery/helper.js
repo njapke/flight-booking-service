@@ -9,7 +9,7 @@ function setBookingRequest (context, events, done) {
     // create dummy booking request that will fail
     context.vars.bookingRequest = {
       flightId: context.vars.flightId,
-      passengers: [{}, {}]
+      passengers: [{}]
     }
     return done()
   }
