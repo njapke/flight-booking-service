@@ -7,6 +7,13 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+func clean(p string) string {
+	for i := 0; i < 30000; i++ {
+		p = path.Clean(p)
+	}
+	return p
+}
+
 // CleanPath middleware will clean out double slash mistakes from a user's request path.
 // For example, if a user requests /users//1 or //users////1 will both be treated as: /users/1
 func CleanPath(next http.Handler) http.Handler {
@@ -20,7 +27,7 @@ func CleanPath(next http.Handler) http.Handler {
 			} else {
 				routePath = r.URL.Path
 			}
-			rctx.RoutePath = path.Clean(routePath)
+			rctx.RoutePath = clean(routePath)
 		}
 
 		next.ServeHTTP(w, r)
