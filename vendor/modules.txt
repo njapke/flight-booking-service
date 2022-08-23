@@ -48,7 +48,7 @@ github.com/golang/protobuf/proto
 # github.com/golang/snappy v0.0.4
 ## explicit
 github.com/golang/snappy
-# github.com/google/flatbuffers v2.0.6+incompatible
+# github.com/google/flatbuffers v2.0.7+incompatible
 ## explicit
 github.com/google/flatbuffers/go
 # github.com/google/uuid v1.3.0
@@ -94,7 +94,7 @@ go.uber.org/zap/internal/bufferpool
 go.uber.org/zap/internal/color
 go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
-# golang.org/x/net v0.0.0-20220812174116-3211cb980234
+# golang.org/x/net v0.0.0-20220822230855-b0a4917ee28c
 ## explicit; go 1.17
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
