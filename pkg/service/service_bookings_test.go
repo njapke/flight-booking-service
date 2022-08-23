@@ -17,7 +17,7 @@ import (
 
 func BenchmarkHandlerGetBookings(b *testing.B) {
 	db, _ := database.New()
-	_ = seeder.Seed(db)
+	_ = seeder.Seed(db, 100)
 	s := New(logger.NewNop(), db)
 
 	for i := 0; i < 100; i++ {
@@ -38,7 +38,7 @@ func BenchmarkHandlerGetBookings(b *testing.B) {
 
 func BenchmarkHandlerCreateBooking(b *testing.B) {
 	db, _ := database.New()
-	_ = seeder.Seed(db)
+	_ = seeder.Seed(db, 100)
 	s := New(logger.NewNop(), db)
 
 	amountOfBookingRequests := 90000

@@ -52,7 +52,7 @@ func run(log *logger.Logger) error {
 	if err != nil {
 		return err
 	}
-	err = seeder.Seed(db)
+	err = seeder.Seed(db, 1000)
 	if err != nil {
 		return err
 	}

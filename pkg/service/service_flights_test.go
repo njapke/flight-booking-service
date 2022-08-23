@@ -13,7 +13,7 @@ import (
 
 func BenchmarkHandlerGetFlights(b *testing.B) {
 	db, _ := database.New()
-	_ = seeder.Seed(db)
+	_ = seeder.Seed(db, 1000)
 	s := New(logger.NewNop(), db)
 
 	resWriter := httptest.NewRecorder()
@@ -27,7 +27,7 @@ func BenchmarkHandlerGetFlights(b *testing.B) {
 
 func BenchmarkHandlerGetFlightsQuery(b *testing.B) {
 	db, _ := database.New()
-	_ = seeder.Seed(db)
+	_ = seeder.Seed(db, 1000)
 	s := New(logger.NewNop(), db)
 
 	resWriter := httptest.NewRecorder()
@@ -41,7 +41,7 @@ func BenchmarkHandlerGetFlightsQuery(b *testing.B) {
 
 func BenchmarkHandlerGetFlight(b *testing.B) {
 	db, _ := database.New()
-	_ = seeder.Seed(db)
+	_ = seeder.Seed(db, 1000)
 	s := New(logger.NewNop(), db)
 
 	req := httptest.NewRequest("GET", "/", nil)
@@ -61,7 +61,7 @@ func BenchmarkHandlerGetFlight(b *testing.B) {
 
 func BenchmarkHandlerGetFlightSeats(b *testing.B) {
 	db, _ := database.New()
-	_ = seeder.Seed(db)
+	_ = seeder.Seed(db, 100)
 	s := New(logger.NewNop(), db)
 
 	req := httptest.NewRequest("GET", "/", nil)
@@ -81,7 +81,7 @@ func BenchmarkHandlerGetFlightSeats(b *testing.B) {
 
 func BenchmarkHandlerGetDestinations(b *testing.B) {
 	db, _ := database.New()
-	_ = seeder.Seed(db)
+	_ = seeder.Seed(db, 1000)
 	s := New(logger.NewNop(), db)
 
 	resWriter := httptest.NewRecorder()

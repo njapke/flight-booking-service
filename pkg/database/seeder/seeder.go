@@ -47,8 +47,8 @@ func generateFlight(rows int) (*models.Flight, []*models.Seat) {
 	return flight, generateSeats(flight.ID, rows)
 }
 
-func Seed(db *database.Database) error {
-	return SeedWithSize(db, 1000, 29)
+func Seed(db *database.Database, flights int) error {
+	return SeedWithSize(db, flights, 29)
 }
 
 func SeedWithSize(db *database.Database, flights, seatRowsPerFlight int) error {

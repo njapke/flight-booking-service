@@ -35,7 +35,7 @@ func setBasicAuth(req *http.Request) {
 func initService(t *testing.T) *Service {
 	db, err := database.New()
 	require.NoError(t, err)
-	require.NoError(t, seeder.Seed(db))
+	require.NoError(t, seeder.Seed(db, 100))
 	s := New(logger.NewNop(), db)
 	s.Auth[testUser[0]] = testUser[1]
 	return s
@@ -197,9 +197,9 @@ func TestGetDestinations(t *testing.T) {
 	require.Contains(t, destinations["to"], "BBB")
 }
 
-func BenchmarkFlights(b *testing.B) {
+func BenchmarkRequestFlights(b *testing.B) {
 	db, _ := database.New()
-	_ = seeder.Seed(db)
+	_ = seeder.Seed(db, 1000)
 	s := New(logger.NewNop(), db)
 
 	responseRecorder := httptest.NewRecorder()
@@ -218,9 +218,9 @@ func findFlightID(db *database.Database) string {
 	return flights[0].Key()
 }
 
-func BenchmarkFlight(b *testing.B) {
+func BenchmarkRequestFlight(b *testing.B) {
 	db, _ := database.New()
-	_ = seeder.Seed(db)
+	_ = seeder.Seed(db, 100)
 	s := New(logger.NewNop(), db)
 
 	responseRecorder := httptest.NewRecorder()
@@ -234,9 +234,9 @@ func BenchmarkFlight(b *testing.B) {
 	}
 }
 
-func BenchmarkSeats(b *testing.B) {
+func BenchmarkRequestSeats(b *testing.B) {
 	db, _ := database.New()
-	_ = seeder.Seed(db)
+	_ = seeder.Seed(db, 100)
 	s := New(logger.NewNop(), db)
 
 	responseRecorder := httptest.NewRecorder()
