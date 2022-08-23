@@ -213,6 +213,22 @@ func BenchmarkRequestFlights(b *testing.B) {
 	}
 }
 
+func BenchmarkRequestFlightsQuery(b *testing.B) {
+	db, _ := database.New()
+	_ = seeder.Seed(db, 1000)
+	s := New(logger.NewNop(), db)
+
+	responseRecorder := httptest.NewRecorder()
+	request := httptest.NewRequest("GET", "/flights?from=AAA", nil)
+	request.Header.Set("X-Forwarded-For", "127.0.0.1")
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		s.ServeHTTP(responseRecorder, request)
+	}
+}
+
 func findFlightID(db *database.Database) string {
 	flights, _ := db.Values(&models.Flight{})
 	return flights[0].Key()
