@@ -16,7 +16,7 @@ function setBookingRequest (context, events, done) {
 
   const pickedSeats = []
   function pickRandomSeat () {
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 3; i++) {
       const seat = context.vars.seats[Math.floor(Math.random() * context.vars.seats.length)].seat
       if (!pickedSeats.includes(seat)) {
         pickedSeats.push(seat)

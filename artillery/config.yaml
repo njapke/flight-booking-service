@@ -7,11 +7,12 @@ config:
       arrivalRate: 10
     - name: Main
       duration: 900
-      arrivalRate: 50
-      maxVusers: 200
+      arrivalRate: 55
+      maxVusers: 220
 
 scenarios:
   - name: "Search flights"
+    weight: 2
     flow:
       - get:
           url: /destinations
@@ -28,14 +29,26 @@ scenarios:
           url: /flights
           qs:
             to: "{{ flightTo }}"
-  - name: "Book flight"
+
+  - name: "Search and Book flight"
+    weight: 1
     flow:
       - get:
-          url: "/flights"
+          url: /destinations
+          capture:
+            - json: "$"
+              as: "destinations"
+      - function: setRandomDestination
+      - think: 1
+      - get:
+          url: /flights
+          qs:
+            from: "{{ flightFrom }}"
           capture:
             - json: "$"
               as: "flights"
       - function: setRandomFlightId
+      - think: 1
       - get:
           url: "/flights/{{ flightId }}/seats"
           capture:
