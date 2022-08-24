@@ -6,7 +6,7 @@ config:
       duration: 60
       arrivalRate: 10
     - name: Main
-      duration: 900
+      duration: 1200
       arrivalRate: 55
       maxVusers: 220
 
