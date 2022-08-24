@@ -265,3 +265,39 @@ func BenchmarkRequestSeats(b *testing.B) {
 		s.ServeHTTP(responseRecorder, request)
 	}
 }
+
+func BenchmarkRequestDestinations(b *testing.B) {
+	db, _ := database.New()
+	_ = seeder.Seed(db, 1000)
+	s := New(logger.NewNop(), db)
+
+	responseRecorder := httptest.NewRecorder()
+	request := httptest.NewRequest("GET", "/destinations", nil)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		s.ServeHTTP(responseRecorder, request)
+	}
+}
+
+func BenchmarkRequestBookings(b *testing.B) {
+	db, _ := database.New()
+	_ = seeder.Seed(db, 1000)
+	s := New(logger.NewNop(), db)
+	s.Auth["test"] = "test"
+
+	for i := 0; i < 100; i++ {
+		_ = db.Put(&models.Booking{UserID: "test", ID: fmt.Sprintf("%d", i)})
+	}
+
+	responseRecorder := httptest.NewRecorder()
+	request := httptest.NewRequest("GET", "/bookings", nil)
+	request.SetBasicAuth("test", "test")
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		s.ServeHTTP(responseRecorder, request)
+	}
+}
