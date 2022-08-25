@@ -61,8 +61,8 @@ func run(log *logger.Logger) error {
 	s.Auth["user"] = "pw"
 
 	srv := &http.Server{
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 30 * time.Second,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 60 * time.Second,
 		IdleTimeout:  60 * time.Second,
 		Addr:         getBindAddress(),
 		Handler:      s,
