@@ -1,0 +1,77 @@
+config:
+  target: "http://localhost:3000"
+  processor: ./helper.js
+  phases:
+    - name: Warm up
+      duration: 60
+      arrivalRate: 10
+    - name: Main
+      duration: 1200
+      arrivalRate: 42
+
+scenarios:
+  - name: searchFlights
+    weight: 2
+    flow:
+      - get:
+          scenarioName: searchFlights
+          afterResponse: afterResponse
+          url: /destinations
+          capture:
+            - json: "$"
+              as: "destinations"
+      - function: setRandomDestination
+      - think: 1
+      - get:
+          scenarioName: searchFlights
+          afterResponse: afterResponse
+          url: /flights
+          qs:
+            from: "{{ flightFrom }}"
+      - get:
+          scenarioName: searchFlights
+          afterResponse: afterResponse
+          url: /flights
+          qs:
+            to: "{{ flightTo }}"
+
+  - name: searchAndBookFlight
+    weight: 1
+    flow:
+      - get:
+          scenarioName: searchAndBookFlight
+          afterResponse: afterResponse
+          url: /destinations
+          capture:
+            - json: "$"
+              as: "destinations"
+      - function: setRandomDestination
+      - think: 1
+      - get:
+          scenarioName: searchAndBookFlight
+          afterResponse: afterResponse
+          url: /flights
+          qs:
+            from: "{{ flightFrom }}"
+          capture:
+            - json: "$"
+              as: "flights"
+      - function: setRandomFlightId
+      - think: 1
+      - get:
+          scenarioName: searchAndBookFlight
+          afterResponse: afterResponse
+          url: "/flights/{{ flightId }}/seats"
+          capture:
+            - json: "$"
+              as: "seats"
+      - function: setBookingRequest
+      - think: 3
+      - post:
+          scenarioName: searchAndBookFlight
+          afterResponse: afterResponse
+          url: "/bookings"
+          json: "{{ bookingRequest }}"
+          auth:
+            user: user
+            pass: pw

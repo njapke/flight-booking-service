@@ -7,10 +7,10 @@ config:
       arrivalRate: 10
     - name: Main
       duration: 1200
-      arrivalRate: 42
+      arrivalRate: 80
 
 scenarios:
-  - name: "Search flights"
+  - name: searchFlights
     weight: 2
     flow:
       - get:
@@ -35,7 +35,7 @@ scenarios:
           qs:
             to: "{{ flightTo }}"
 
-  - name: "Search and Book flight"
+  - name: searchAndBookFlight
     weight: 1
     flow:
       - get:
