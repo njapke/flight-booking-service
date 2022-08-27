@@ -7,7 +7,7 @@ config:
       arrivalRate: 10
     - name: Main
       duration: 1200
-      arrivalRate: 80
+      arrivalRate: 50
 
 scenarios:
   - name: searchFlights
