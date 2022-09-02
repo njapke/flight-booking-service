@@ -40,7 +40,7 @@ function selectRandomUniqueElements (data, count) {
 }
 
 export function searchFlights () {
-  const endpoint = `http://${__ENV.TARGET}`
+  const endpoint = `http://${__ENV.target}`
   const destinationRes = http.get(http.url`${endpoint}/destinations`)
   if (destinationRes.status !== 200) return
   const destination = JSON.parse(destinationRes.body)
@@ -49,7 +49,7 @@ export function searchFlights () {
 }
 
 export function searchAndBookFlight () {
-  const endpoint = `http://${__ENV.TARGET}`
+  const endpoint = `http://${__ENV.target}`
   const destinationRes = http.get(http.url`${endpoint}/destinations`)
   if (destinationRes.status !== 200) return
   const destination = JSON.parse(destinationRes.body)
