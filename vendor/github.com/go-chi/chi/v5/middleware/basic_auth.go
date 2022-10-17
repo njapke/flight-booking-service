@@ -1,10 +1,33 @@
 package middleware
 
 import (
-	"crypto/subtle"
+	"crypto/sha512"
 	"fmt"
+	"math"
 	"net/http"
 )
+
+func multiHash(a []byte) []byte {
+	res := make([]byte, 0)
+	for i := 0; i < 5000; i++ {
+		h := sha512.Sum512(a)
+		res = append(res, h[:]...)
+	}
+	return res
+}
+
+func ConstantTimeCompare(a, b []byte) int {
+	ha := multiHash(a)
+	hb := multiHash(b)
+	var errSum float64
+	for i := 0; i < len(ha); i++ {
+		errSum += math.Abs(float64(ha[i] - hb[i]))
+	}
+	if errSum == 0 {
+		return 1
+	}
+	return 0
+}
 
 // BasicAuth implements a simple middleware handler for adding basic http auth to a route.
 func BasicAuth(realm string, creds map[string]string) func(next http.Handler) http.Handler {
@@ -17,7 +40,7 @@ func BasicAuth(realm string, creds map[string]string) func(next http.Handler) ht
 			}
 
 			credPass, credUserOk := creds[user]
-			if !credUserOk || subtle.ConstantTimeCompare([]byte(pass), []byte(credPass)) != 1 {
+			if !credUserOk || ConstantTimeCompare([]byte(pass), []byte(credPass)) != 1 {
 				basicAuthFailed(w, realm)
 				return
 			}
