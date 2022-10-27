@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 
 	"github.com/christophwitzko/flight-booking-service/pkg/database"
@@ -295,5 +296,37 @@ func BenchmarkRequestBookings(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		s.ServeHTTP(responseRecorder, request)
+	}
+}
+
+func BenchmarkRequestCreateBooking(b *testing.B) {
+	db, _ := database.New()
+	_ = seeder.Seed(db, 100)
+	s := New(logger.NewNop(), db)
+	s.Auth["test"] = "test"
+
+	amountOfBookingRequests := 90000
+	bookingRequests := make([]io.ReadCloser, amountOfBookingRequests)
+	for i := 0; i < amountOfBookingRequests; i++ {
+		flightID := strconv.Itoa(i)
+		_ = db.Put(&models.Flight{ID: flightID}, &models.Seat{FlightID: flightID, Seat: "A1", Available: true})
+		bookingRequest := &models.Booking{
+			FlightID:   flightID,
+			Passengers: []models.Passenger{{Name: "user", Seat: "A1"}},
+		}
+		payload, _ := json.Marshal(bookingRequest)
+		bookingRequests[i] = io.NopCloser(bytes.NewReader(payload))
+	}
+
+	responseRecorder := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", "/bookings", nil)
+	req.SetBasicAuth("test", "test")
+	req.ContentLength = -1
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		req.Body = bookingRequests[i]
+		s.ServeHTTP(responseRecorder, req)
 	}
 }
