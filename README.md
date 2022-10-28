@@ -1,6 +1,14 @@
 # flight-booking-service
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/christophwitzko/flight-booking-service)](https://pkg.go.dev/github.com/christophwitzko/flight-booking-service)
 
+### GET /destinations
+
+```json
+{
+  "from": ["TXL", "LHR", "FRA", "JFK", "MUC", "CDG", "AMS", "SFO", "BOS", "MIA"],
+  "to": ["TXL", "LHR", "FRA", "JFK", "MUC", "CDG", "AMS", "SFO", "BOS", "MIA"]
+}
+```
 
 ### GET /flights
 
@@ -32,6 +40,18 @@
 ```
 
 ### POST /bookings
+
+```json
+{
+  "flightId": "fea320f4-8f9a-4483-af65-bd49d6838a83",
+  "passengers": [
+    {
+      "name": "Chris",
+      "seat": "4C"
+    }
+  ]
+}
+```
 
 ```json
 {
