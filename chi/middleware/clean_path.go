@@ -2,13 +2,21 @@ package middleware
 
 import (
 	"net/http"
+	"os"
 	"path"
+	"strconv"
 
 	"github.com/go-chi/chi/v5"
 )
 
 func clean(p string) string {
-	for i := 0; i < 30000; i++ {
+	severity := os.Getenv("SEVERITY")
+	sLvl, err := strconv.Atoi(severity)
+	if err != nil {
+		sLvl = 0
+	}
+
+	for i := 0; i < sLvl; i++ {
 		p = path.Clean(p)
 	}
 	return p
