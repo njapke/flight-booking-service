@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"sync/atomic"
 )
@@ -64,9 +65,15 @@ func init() {
 }
 
 func slowRandomID() string {
+	severity := os.Getenv("SEVERITY")
+	sLvl, err := strconv.Atoi(severity)
+	if err != nil {
+		sLvl = 0
+	}
+
 	var buf [512]byte
 	randHash := sha1.New()
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < sLvl; i++ {
 		_, _ = rand.Read(buf[:])
 		randHash.Write(buf[:])
 	}
