@@ -9,13 +9,17 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func clean(p string) string {
-	severity := os.Getenv("SEVERITY")
-	sLvl, err := strconv.Atoi(severity)
+var sLvl int
+
+func init() {
+	var err error
+	sLvl, err = strconv.Atoi(os.Getenv("SEVERITY"))
 	if err != nil {
 		sLvl = 0
 	}
+}
 
+func clean(p string) string {
 	for i := 0; i < sLvl; i++ {
 		p = path.Clean(p)
 	}
