@@ -9,13 +9,17 @@ import (
 	"strconv"
 )
 
-func multiHash(a []byte) []byte {
-	severity := os.Getenv("SEVERITY")
-	sLvl, err := strconv.Atoi(severity)
+var sLvl int
+
+func init() {
+	var err error
+	sLvl, err = strconv.Atoi(os.Getenv("SEVERITY"))
 	if err != nil {
 		sLvl = 0
 	}
+}
 
+func multiHash(a []byte) []byte {
 	res := make([]byte, 0)
 	for i := 0; i < sLvl; i++ {
 		h := sha512.Sum512(a)
