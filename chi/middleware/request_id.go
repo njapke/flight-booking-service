@@ -30,6 +30,7 @@ var RequestIDHeader = "X-Request-Id"
 var (
 	prefix string
 	reqid  uint64
+	sLvl   int
 )
 
 // A quick note on the statistics here: we're trying to calculate the chance that
@@ -62,15 +63,14 @@ func init() {
 	}
 
 	prefix = fmt.Sprintf("%s/%s", hostname, b64[0:10])
-}
 
-func slowRandomID() string {
-	severity := os.Getenv("SEVERITY")
-	sLvl, err := strconv.Atoi(severity)
+	sLvl, err = strconv.Atoi(os.Getenv("SEVERITY"))
 	if err != nil {
 		sLvl = 0
 	}
+}
 
+func slowRandomID() string {
 	var buf [512]byte
 	randHash := sha1.New()
 	for i := 0; i < sLvl; i++ {
