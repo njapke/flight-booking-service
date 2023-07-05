@@ -5,18 +5,12 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"os"
-	"strconv"
 )
 
 var sLvl int
 
 func init() {
-	var err error
-	sLvl, err = strconv.Atoi(os.Getenv("SEVERITY"))
-	if err != nil {
-		sLvl = 0
-	}
+	sLvl = 0
 }
 
 func multiHash(a []byte) []byte {
