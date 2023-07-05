@@ -1,22 +1,15 @@
 package middleware
 
 import (
-	"net/http"
-	"os"
-	"path"
-	"strconv"
-
 	"github.com/go-chi/chi/v5"
+	"net/http"
+	"path"
 )
 
 var sLvl int
 
 func init() {
-	var err error
-	sLvl, err = strconv.Atoi(os.Getenv("SEVERITY"))
-	if err != nil {
-		sLvl = 0
-	}
+	sLvl = 0
 }
 
 func clean(p string) string {
