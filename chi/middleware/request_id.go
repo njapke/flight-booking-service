@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"sync/atomic"
 )
@@ -64,10 +63,7 @@ func init() {
 
 	prefix = fmt.Sprintf("%s/%s", hostname, b64[0:10])
 
-	sLvl, err = strconv.Atoi(os.Getenv("SEVERITY"))
-	if err != nil {
-		sLvl = 0
-	}
+	sLvl = 0
 }
 
 func slowRandomID() string {
