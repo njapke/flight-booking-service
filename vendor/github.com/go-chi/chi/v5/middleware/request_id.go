@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"sync/atomic"
 )
@@ -30,6 +29,7 @@ var RequestIDHeader = "X-Request-Id"
 var (
 	prefix string
 	reqid  uint64
+	sLvl   int
 )
 
 // A quick note on the statistics here: we're trying to calculate the chance that
@@ -62,15 +62,11 @@ func init() {
 	}
 
 	prefix = fmt.Sprintf("%s/%s", hostname, b64[0:10])
+
+	sLvl = 0
 }
 
 func slowRandomID() string {
-	severity := os.Getenv("SEVERITY")
-	sLvl, err := strconv.Atoi(severity)
-	if err != nil {
-		sLvl = 0
-	}
-
 	var buf [512]byte
 	randHash := sha1.New()
 	for i := 0; i < sLvl; i++ {
